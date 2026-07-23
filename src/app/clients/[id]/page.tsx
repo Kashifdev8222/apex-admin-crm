@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { fmtDate, money } from "@/lib/format";
-import { updateClientStatus } from "@/app/actions";
+import { capitalize, fmtDate, money } from "@/lib/format";
+import { deleteClient, updateClientStatus } from "@/app/actions";
 
 export default async function ClientDetailPage({
   params,
@@ -55,20 +56,28 @@ export default async function ClientDetailPage({
             <form action={updateClientStatus} className="row-actions" style={{ marginTop: "1rem" }}>
               <input type="hidden" name="id" value={client.id} />
               <select name="status" defaultValue={client.status}>
-                <option value="active">active</option>
-                <option value="inactive">inactive</option>
-                <option value="blocked">blocked</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="blocked">Blocked</option>
               </select>
               <button className="btn btn-primary btn-sm" type="submit">
-                Update status
+                Update Status
               </button>
             </form>
+            <div style={{ marginTop: "1rem" }}>
+              <ConfirmDeleteButton
+                action={deleteClient}
+                id={client.id}
+                label="Delete Client"
+                confirmText="Delete this client and all related accounts, deposits, KYC, tickets?"
+              />
+            </div>
           </div>
         </div>
 
         <div className="panel">
           <div className="panel-head">
-            <h2>Trading accounts</h2>
+            <h2>Trading Accounts</h2>
           </div>
           <div className="table-wrap">
             <table className="data">
@@ -83,7 +92,7 @@ export default async function ClientDetailPage({
               <tbody>
                 {client.accounts.map((a) => (
                   <tr key={a.id}>
-                    <td>{a.name}</td>
+                    <td className="cap">{a.name}</td>
                     <td>{a.externalLogin || "—"}</td>
                     <td>{money(Number(a.balance), a.currency)}</td>
                     <td>1:{a.leverage}</td>
@@ -113,12 +122,12 @@ export default async function ClientDetailPage({
             <tbody>
               {client.transactions.map((t) => (
                 <tr key={t.id}>
-                  <td>{t.type}</td>
+                  <td>{capitalize(t.type)}</td>
                   <td>
                     <StatusBadge status={t.status} />
                   </td>
                   <td>{money(Number(t.amount), t.currency)}</td>
-                  <td>{t.paymentMethod || "—"}</td>
+                  <td>{capitalize(t.paymentMethod || "—")}</td>
                   <td>{fmtDate(t.createdAt)}</td>
                 </tr>
               ))}

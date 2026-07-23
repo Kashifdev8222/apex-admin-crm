@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { fmtDate, money } from "@/lib/format";
+import { deleteClient } from "@/app/actions";
 
 export default async function ClientsPage({
   searchParams,
@@ -48,9 +50,14 @@ export default async function ClientsPage({
   return (
     <AppShell user={user} title="Clients">
       <form className="filters" method="get">
-        <input name="q" defaultValue={q} placeholder="Search email, name, phone" />
-        <select name="tenant" defaultValue={tenant}>
-          <option value="">All tenants</option>
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Search Email, Name, Phone"
+          aria-label="Search"
+        />
+        <select name="tenant" defaultValue={tenant} aria-label="Tenant">
+          <option value="">All Tenants</option>
           {tenants.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name} ({t.slug})
@@ -58,13 +65,13 @@ export default async function ClientsPage({
           ))}
         </select>
         <button className="btn btn-primary" type="submit">
-          Filter
+          Apply Filter
         </button>
       </form>
 
       <div className="panel">
         <div className="panel-head">
-          <h2>{rows.length} clients</h2>
+          <h2>{rows.length} Clients</h2>
         </div>
         <div className="table-wrap">
           <table className="data">
@@ -76,6 +83,7 @@ export default async function ClientsPage({
                 <th>Status</th>
                 <th>Balance</th>
                 <th>Joined</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -85,7 +93,7 @@ export default async function ClientsPage({
                 return (
                   <tr key={c.id}>
                     <td>
-                      <Link href={`/clients/${c.id}`}>
+                      <Link href={`/clients/${c.id}`} className="cap">
                         {c.firstName} {c.lastName}
                       </Link>
                     </td>
@@ -96,6 +104,18 @@ export default async function ClientsPage({
                     </td>
                     <td>{money(bal, cur)}</td>
                     <td>{fmtDate(c.createdAt)}</td>
+                    <td>
+                      <div className="row-actions">
+                        <Link className="btn btn-soft btn-sm" href={`/clients/${c.id}`}>
+                          Open
+                        </Link>
+                        <ConfirmDeleteButton
+                          action={deleteClient}
+                          id={c.id}
+                          confirmText="Delete this client and all related data?"
+                        />
+                      </div>
+                    </td>
                   </tr>
                 );
               })}

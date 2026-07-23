@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { fmtDate } from "@/lib/format";
-import { reviewKyc } from "@/app/actions";
+import { capitalize, fmtDate } from "@/lib/format";
+import { deleteKycDocument, reviewKyc } from "@/app/actions";
 
 export default async function KycPage({
   searchParams,
@@ -28,20 +29,20 @@ export default async function KycPage({
   return (
     <AppShell user={user} title="KYC Review">
       <form className="filters" method="get">
-        <select name="status" defaultValue={status}>
-          <option value="PENDING">PENDING</option>
-          <option value="APPROVED">APPROVED</option>
-          <option value="REJECTED">REJECTED</option>
+        <select name="status" defaultValue={status} aria-label="Status">
+          <option value="PENDING">Pending</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
           <option value="ALL">All</option>
         </select>
         <button className="btn btn-primary" type="submit">
-          Filter
+          Apply Filter
         </button>
       </form>
 
       <div className="panel">
         <div className="panel-head">
-          <h2>{rows.length} documents</h2>
+          <h2>{rows.length} Documents</h2>
         </div>
         <div className="table-wrap">
           <table className="data">
@@ -60,13 +61,13 @@ export default async function KycPage({
               {rows.map((d) => (
                 <tr key={d.id}>
                   <td>
-                    <Link href={`/clients/${d.client.id}`}>
+                    <Link href={`/clients/${d.client.id}`} className="cap">
                       {d.client.firstName} {d.client.lastName}
                     </Link>
                     <div className="muted">{d.client.email}</div>
                   </td>
                   <td>{d.tenant.slug}</td>
-                  <td>{d.documentType}</td>
+                  <td>{capitalize(d.documentType)}</td>
                   <td>
                     {d.publicUrl ? (
                       <a href={d.publicUrl} target="_blank" rel="noreferrer">
@@ -81,27 +82,34 @@ export default async function KycPage({
                   </td>
                   <td>{fmtDate(d.createdAt)}</td>
                   <td>
-                    {d.status === "PENDING" ? (
-                      <div className="row-actions">
-                        <form action={reviewKyc}>
-                          <input type="hidden" name="id" value={d.id} />
-                          <input type="hidden" name="status" value="APPROVED" />
-                          <button className="btn btn-ok btn-sm" type="submit">
-                            Approve
-                          </button>
-                        </form>
-                        <form action={reviewKyc}>
-                          <input type="hidden" name="id" value={d.id} />
-                          <input type="hidden" name="status" value="REJECTED" />
-                          <input type="hidden" name="reviewNote" value="Rejected by admin" />
-                          <button className="btn btn-bad btn-sm" type="submit">
-                            Reject
-                          </button>
-                        </form>
-                      </div>
-                    ) : (
-                      <span className="muted">{d.reviewNote || "—"}</span>
-                    )}
+                    <div className="row-actions">
+                      {d.status === "PENDING" ? (
+                        <>
+                          <form action={reviewKyc}>
+                            <input type="hidden" name="id" value={d.id} />
+                            <input type="hidden" name="status" value="APPROVED" />
+                            <button className="btn btn-ok btn-sm" type="submit">
+                              Approve
+                            </button>
+                          </form>
+                          <form action={reviewKyc}>
+                            <input type="hidden" name="id" value={d.id} />
+                            <input type="hidden" name="status" value="REJECTED" />
+                            <input type="hidden" name="reviewNote" value="Rejected by admin" />
+                            <button className="btn btn-warn btn-sm" type="submit">
+                              Reject
+                            </button>
+                          </form>
+                        </>
+                      ) : (
+                        <span className="muted">{d.reviewNote || "—"}</span>
+                      )}
+                      <ConfirmDeleteButton
+                        action={deleteKycDocument}
+                        id={d.id}
+                        confirmText="Delete this KYC document?"
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -1,8 +1,10 @@
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { fmtDate, money } from "@/lib/format";
+import { deleteAccount } from "@/app/actions";
 import Link from "next/link";
 
 export default async function AccountsPage({
@@ -32,8 +34,8 @@ export default async function AccountsPage({
   return (
     <AppShell user={user} title="Trading Accounts">
       <form className="filters" method="get">
-        <select name="tenant" defaultValue={tenant}>
-          <option value="">All tenants</option>
+        <select name="tenant" defaultValue={tenant} aria-label="Tenant">
+          <option value="">All Tenants</option>
           {tenants.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name} ({t.slug})
@@ -41,13 +43,13 @@ export default async function AccountsPage({
           ))}
         </select>
         <button className="btn btn-primary" type="submit">
-          Filter
+          Apply Filter
         </button>
       </form>
 
       <div className="panel">
         <div className="panel-head">
-          <h2>{rows.length} accounts</h2>
+          <h2>{rows.length} Accounts</h2>
         </div>
         <div className="table-wrap">
           <table className="data">
@@ -61,15 +63,16 @@ export default async function AccountsPage({
                 <th>Equity</th>
                 <th>Active</th>
                 <th>Updated</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((a) => (
                 <tr key={a.id}>
                   <td>{a.externalLogin || "—"}</td>
-                  <td>{a.name}</td>
+                  <td className="cap">{a.name}</td>
                   <td>
-                    <Link href={`/clients/${a.client.id}`}>
+                    <Link href={`/clients/${a.client.id}`} className="cap">
                       {a.client.firstName} {a.client.lastName}
                     </Link>
                     <div className="muted">{a.client.email}</div>
@@ -81,6 +84,13 @@ export default async function AccountsPage({
                     <StatusBadge status={a.isActive ? "ACTIVE" : "INACTIVE"} />
                   </td>
                   <td>{fmtDate(a.updatedAt)}</td>
+                  <td>
+                    <ConfirmDeleteButton
+                      action={deleteAccount}
+                      id={a.id}
+                      confirmText="Delete this trading account and its transactions?"
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>

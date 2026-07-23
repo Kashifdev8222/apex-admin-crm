@@ -2,7 +2,7 @@ import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { fmtDate, money } from "@/lib/format";
+import { capitalize, fmtDate, money } from "@/lib/format";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -53,30 +53,30 @@ export default async function DashboardPage() {
           <div className="value">{clients}</div>
         </div>
         <div className="stat">
-          <div className="label">Active accounts</div>
+          <div className="label">Active Accounts</div>
           <div className="value">{accounts}</div>
         </div>
         <div className="stat">
-          <div className="label">Open tickets</div>
+          <div className="label">Open Tickets</div>
           <div className="value">{openTickets}</div>
         </div>
       </div>
 
       <div className="stats">
         <div className="stat">
-          <div className="label">Pending deposits</div>
+          <div className="label">Pending Deposits</div>
           <div className="value">{pendingDeposits}</div>
         </div>
         <div className="stat">
-          <div className="label">Pending withdrawals</div>
+          <div className="label">Pending Withdrawals</div>
           <div className="value">{pendingWithdraws}</div>
         </div>
         <div className="stat">
-          <div className="label">KYC to review</div>
+          <div className="label">KYC To Review</div>
           <div className="value">{pendingKyc}</div>
         </div>
         <div className="stat">
-          <div className="label">Staff home</div>
+          <div className="label">Staff Home</div>
           <div className="value" style={{ fontSize: "1.05rem" }}>
             {user.homeTenantSlug}
           </div>
@@ -85,9 +85,9 @@ export default async function DashboardPage() {
 
       <div className="panel">
         <div className="panel-head">
-          <h2>Recent transactions</h2>
+          <h2>Recent Transactions</h2>
           <Link href="/deposits" className="muted">
-            Manage deposits →
+            Manage Deposits →
           </Link>
         </div>
         <div className="table-wrap">
@@ -106,19 +106,21 @@ export default async function DashboardPage() {
               {recentTx.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="muted">
-                    No transactions yet.
+                    No Transactions Yet.
                   </td>
                 </tr>
               ) : (
                 recentTx.map((t) => (
                   <tr key={t.id}>
-                    <td>{t.type}</td>
+                    <td>{capitalize(t.type)}</td>
                     <td>
                       <StatusBadge status={t.status} />
                     </td>
                     <td>{money(Number(t.amount), t.currency)}</td>
                     <td>
-                      {t.client.firstName} {t.client.lastName}
+                      <span className="cap">
+                        {t.client.firstName} {t.client.lastName}
+                      </span>
                       <div className="muted">{t.client.email}</div>
                     </td>
                     <td>{t.tenant.slug}</td>

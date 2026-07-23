@@ -1,3 +1,11 @@
+export function capitalize(value: string | null | undefined) {
+  if (!value) return "—";
+  return value
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function money(n: number | string | { toString(): string }, currency = "USD") {
   const value = typeof n === "number" ? n : Number(n);
   return new Intl.NumberFormat("en-US", {
@@ -21,13 +29,13 @@ export function fmtDate(d: Date | string | null | undefined) {
 
 export function statusTone(status: string) {
   const s = status.toUpperCase();
-  if (["COMPLETED", "APPROVED", "ACTIVE", "RESOLVED", "CLOSED"].includes(s)) {
+  if (["COMPLETED", "APPROVED", "ACTIVE", "RESOLVED", "CLOSED", "VERIFIED"].includes(s)) {
     return "ok";
   }
   if (["PENDING", "PROCESSING", "NEW", "OPEN", "SCHEDULED"].includes(s)) {
     return "warn";
   }
-  if (["FAILED", "CANCELED", "REJECTED", "INACTIVE"].includes(s)) {
+  if (["FAILED", "CANCELED", "CANCELLED", "REJECTED", "INACTIVE", "BLOCKED"].includes(s)) {
     return "bad";
   }
   return "neutral";

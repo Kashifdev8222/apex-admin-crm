@@ -39,12 +39,21 @@ export async function logoutAction() {
 export async function updateDepositStatus(formData: FormData) {
   await requireSession();
   const id = String(formData.get("id") || "");
-  const status = String(formData.get("status") || "") as
-    | "COMPLETED"
-    | "FAILED"
-    | "CANCELED"
-    | "PROCESSING";
+  const raw = String(formData.get("status") || "");
   const note = String(formData.get("note") || "") || undefined;
+
+  const statusMap: Record<string, "COMPLETED" | "FAILED" | "CANCELED" | "PROCESSING" | "PENDING"> = {
+    COMPLETED: "COMPLETED",
+    APPROVED: "COMPLETED",
+    FAILED: "FAILED",
+    REJECTED: "FAILED",
+    CANCELED: "CANCELED",
+    CANCELLED: "CANCELED",
+    PROCESSING: "PROCESSING",
+    PENDING: "PENDING",
+  };
+  const status = statusMap[raw.toUpperCase()];
+  if (!status) return;
 
   const tx = await prisma.transaction.findFirst({
     where: { id, type: "DEPOSIT" },
@@ -56,7 +65,14 @@ export async function updateDepositStatus(formData: FormData) {
   await prisma.$transaction(async (db) => {
     await db.transaction.update({
       where: { id: tx.id },
-      data: { status, note: note || tx.note },
+      data: {
+        status,
+        note: note || tx.note,
+        comment:
+          status === "FAILED"
+            ? note || tx.comment || "Rejected by admin"
+            : tx.comment,
+      },
     });
     if (status === "COMPLETED" && tx.status !== "COMPLETED") {
       await db.tradingAccount.update({
@@ -77,12 +93,21 @@ export async function updateDepositStatus(formData: FormData) {
 export async function updateWithdrawStatus(formData: FormData) {
   await requireSession();
   const id = String(formData.get("id") || "");
-  const status = String(formData.get("status") || "") as
-    | "COMPLETED"
-    | "FAILED"
-    | "CANCELED"
-    | "PROCESSING";
+  const raw = String(formData.get("status") || "");
   const note = String(formData.get("note") || "") || undefined;
+
+  const statusMap: Record<string, "COMPLETED" | "FAILED" | "CANCELED" | "PROCESSING" | "PENDING"> = {
+    COMPLETED: "COMPLETED",
+    APPROVED: "COMPLETED",
+    FAILED: "FAILED",
+    REJECTED: "FAILED",
+    CANCELED: "CANCELED",
+    CANCELLED: "CANCELED",
+    PROCESSING: "PROCESSING",
+    PENDING: "PENDING",
+  };
+  const status = statusMap[raw.toUpperCase()];
+  if (!status) return;
 
   const tx = await prisma.transaction.findFirst({
     where: { id, type: "WITHDRAW" },
@@ -94,7 +119,14 @@ export async function updateWithdrawStatus(formData: FormData) {
   await prisma.$transaction(async (db) => {
     await db.transaction.update({
       where: { id: tx.id },
-      data: { status, note: note || tx.note },
+      data: {
+        status,
+        note: note || tx.note,
+        comment:
+          status === "FAILED"
+            ? note || tx.comment || "Rejected by admin"
+            : tx.comment,
+      },
     });
     if (
       (status === "FAILED" || status === "CANCELED") &&
@@ -184,3 +216,80 @@ export async function updateMeetingStatus(formData: FormData) {
   await prisma.meeting.update({ where: { id }, data: { status } });
   revalidatePath("/meetings");
 }
+
+export async function deleteTransaction(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  const tx = await prisma.transaction.findFirst({ where: { id } });
+  if (!tx) return;
+  await prisma.transaction.delete({ where: { id } });
+  revalidatePath("/deposits");
+  revalidatePath("/withdrawals");
+  revalidatePath("/dashboard");
+  revalidatePath(`/clients/${tx.clientId}`);
+}
+
+export async function deleteTicket(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  await prisma.ticketComment.deleteMany({ where: { ticketId: id } });
+  await prisma.ticket.delete({ where: { id } });
+  revalidatePath("/tickets");
+  redirect("/tickets");
+}
+
+export async function deleteMeeting(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  await prisma.meeting.delete({ where: { id } });
+  revalidatePath("/meetings");
+}
+
+export async function deleteKycDocument(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  await prisma.kycDocument.delete({ where: { id } });
+  revalidatePath("/kyc");
+}
+
+export async function deleteAccount(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  const openTx = await prisma.transaction.count({ where: { accountId: id } });
+  if (openTx > 0) {
+    await prisma.transaction.deleteMany({ where: { accountId: id } });
+  }
+  await prisma.tradingAccount.delete({ where: { id } });
+  revalidatePath("/accounts");
+  revalidatePath("/clients");
+}
+
+export async function deleteClient(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  const client = await prisma.client.findFirst({ where: { id } });
+  if (!client) return;
+
+  await prisma.$transaction(async (db) => {
+    const tickets = await db.ticket.findMany({
+      where: { clientId: id },
+      select: { id: true },
+    });
+    const ticketIds = tickets.map((t) => t.id);
+    if (ticketIds.length) {
+      await db.ticketComment.deleteMany({ where: { ticketId: { in: ticketIds } } });
+      await db.ticket.deleteMany({ where: { clientId: id } });
+    }
+    await db.meeting.deleteMany({ where: { clientId: id } });
+    await db.kycDocument.deleteMany({ where: { clientId: id } });
+    await db.transaction.deleteMany({ where: { clientId: id } });
+    await db.transactionSource.deleteMany({ where: { clientId: id } });
+    await db.tradingAccount.deleteMany({ where: { clientId: id } });
+    await db.client.delete({ where: { id } });
+  });
+
+  revalidatePath("/clients");
+  revalidatePath("/dashboard");
+  redirect("/clients");
+}
+

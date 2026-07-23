@@ -3,7 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { fmtDate } from "@/lib/format";
+import { capitalize, fmtDate } from "@/lib/format";
 
 export default async function TicketsPage({
   searchParams,
@@ -29,8 +29,8 @@ export default async function TicketsPage({
   return (
     <AppShell user={user} title="Tickets">
       <form className="filters" method="get">
-        <select name="status" defaultValue={status}>
-          <option value="">All statuses</option>
+        <select name="status" defaultValue={status} aria-label="Status">
+          <option value="">All Statuses</option>
           <option value="New">New</option>
           <option value="Open">Open</option>
           <option value="Pending">Pending</option>
@@ -39,13 +39,13 @@ export default async function TicketsPage({
           <option value="Closed">Closed</option>
         </select>
         <button className="btn btn-primary" type="submit">
-          Filter
+          Apply Filter
         </button>
       </form>
 
       <div className="panel">
         <div className="panel-head">
-          <h2>{rows.length} tickets</h2>
+          <h2>{rows.length} Tickets</h2>
         </div>
         <div className="table-wrap">
           <table className="data">
@@ -68,11 +68,13 @@ export default async function TicketsPage({
                     <div className="muted">{t.department?.name || "—"}</div>
                   </td>
                   <td>
-                    {t.client.firstName} {t.client.lastName}
+                    <span className="cap">
+                      {t.client.firstName} {t.client.lastName}
+                    </span>
                     <div className="muted">{t.client.email}</div>
                   </td>
                   <td>{t.tenant.slug}</td>
-                  <td>{t.category}</td>
+                  <td>{capitalize(t.category)}</td>
                   <td>
                     <StatusBadge status={t.status} />
                   </td>

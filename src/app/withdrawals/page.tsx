@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
+import { TxStatusActions } from "@/components/TxStatusActions";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { fmtDate, money } from "@/lib/format";
-import { updateWithdrawStatus } from "@/app/actions";
+import { deleteTransaction, updateWithdrawStatus } from "@/app/actions";
 
 export default async function WithdrawalsPage({
   searchParams,
@@ -40,16 +42,16 @@ export default async function WithdrawalsPage({
   return (
     <AppShell user={user} title="Withdrawals">
       <form className="filters" method="get">
-        <select name="status" defaultValue={status}>
-          <option value="">All statuses</option>
-          <option value="PENDING">PENDING</option>
-          <option value="PROCESSING">PROCESSING</option>
-          <option value="COMPLETED">COMPLETED</option>
-          <option value="FAILED">FAILED</option>
-          <option value="CANCELED">CANCELED</option>
+        <select name="status" defaultValue={status} aria-label="Status">
+          <option value="">All Statuses</option>
+          <option value="PENDING">Pending</option>
+          <option value="PROCESSING">Processing</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="FAILED">Rejected</option>
+          <option value="CANCELED">Canceled</option>
         </select>
-        <select name="tenant" defaultValue={tenant}>
-          <option value="">All tenants</option>
+        <select name="tenant" defaultValue={tenant} aria-label="Tenant">
+          <option value="">All Tenants</option>
           {tenants.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name} ({t.slug})
@@ -57,75 +59,76 @@ export default async function WithdrawalsPage({
           ))}
         </select>
         <button className="btn btn-primary" type="submit">
-          Filter
+          Apply Filter
         </button>
       </form>
 
       <div className="panel">
         <div className="panel-head">
-          <h2>{rows.length} withdrawals</h2>
-          <span className="muted">Fail/Cancel refunds held balance</span>
+          <h2>{rows.length} Withdrawals</h2>
+          <span className="muted">Reject / Cancel Refunds Held Balance</span>
         </div>
         <div className="table-wrap">
           <table className="data">
             <thead>
               <tr>
                 <th>Client</th>
-                <th>Tenant</th>
                 <th>Amount</th>
-                <th>Destination</th>
-                <th>TP</th>
+                <th>Comment</th>
+                <th>Rejection Reason</th>
                 <th>Status</th>
                 <th>Created</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((t) => (
-                <tr key={t.id}>
-                  <td>
-                    <Link href={`/clients/${t.client.id}`}>
-                      {t.client.firstName} {t.client.lastName}
-                    </Link>
-                    <div className="muted">{t.client.email}</div>
-                  </td>
-                  <td>{t.tenant.slug}</td>
-                  <td>{money(Number(t.amount), t.currency)}</td>
-                  <td>
-                    {t.transactionSource?.source || t.paymentMethod || "—"}
-                    {t.transactionSource?.value ? (
-                      <div className="muted">{t.transactionSource.value}</div>
-                    ) : null}
-                  </td>
-                  <td>{t.account.externalLogin || t.tpNumber || "—"}</td>
-                  <td>
-                    <StatusBadge status={t.status} />
-                  </td>
-                  <td>{fmtDate(t.createdAt)}</td>
-                  <td>
-                    {t.status === "PENDING" || t.status === "PROCESSING" ? (
+              {rows.map((t) => {
+                const comment = t.comment || "—";
+                const reject =
+                  String(t.status).toUpperCase() === "FAILED"
+                    ? t.note || t.comment || "—"
+                    : "—";
+                return (
+                  <tr key={t.id}>
+                    <td>
+                      <Link href={`/clients/${t.client.id}`} className="cap">
+                        {t.client.firstName} {t.client.lastName}
+                      </Link>
+                      <div className="muted">{t.client.email}</div>
+                      <div className="muted">{t.tenant.slug}</div>
+                    </td>
+                    <td>{money(Number(t.amount), t.currency)}</td>
+                    <td>{String(comment)}</td>
+                    <td>{String(reject)}</td>
+                    <td>
+                      <StatusBadge
+                        status={
+                          t.status === "FAILED"
+                            ? "Rejected"
+                            : t.status === "CANCELED"
+                              ? "Canceled"
+                              : t.status
+                        }
+                      />
+                    </td>
+                    <td>{fmtDate(t.createdAt)}</td>
+                    <td>
                       <div className="row-actions">
-                        <form action={updateWithdrawStatus}>
-                          <input type="hidden" name="id" value={t.id} />
-                          <input type="hidden" name="status" value="COMPLETED" />
-                          <button className="btn btn-ok btn-sm" type="submit">
-                            Complete
-                          </button>
-                        </form>
-                        <form action={updateWithdrawStatus}>
-                          <input type="hidden" name="id" value={t.id} />
-                          <input type="hidden" name="status" value="CANCELED" />
-                          <button className="btn btn-bad btn-sm" type="submit">
-                            Cancel
-                          </button>
-                        </form>
+                        <TxStatusActions
+                          id={t.id}
+                          currentStatus={t.status}
+                          action={updateWithdrawStatus}
+                        />
+                        <ConfirmDeleteButton
+                          action={deleteTransaction}
+                          id={t.id}
+                          confirmText="Delete this withdrawal permanently?"
+                        />
                       </div>
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

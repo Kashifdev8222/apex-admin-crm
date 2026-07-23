@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { fmtDate } from "@/lib/format";
-import { addTicketComment, updateTicketStatus } from "@/app/actions";
+import { capitalize, fmtDate } from "@/lib/format";
+import { addTicketComment, deleteTicket, updateTicketStatus } from "@/app/actions";
 
 export default async function TicketDetailPage({
   params,
@@ -41,12 +42,12 @@ export default async function TicketDetailPage({
           </div>
           <div className="stack" style={{ padding: "1rem" }}>
             {ticket.comments.length === 0 ? (
-              <p className="muted">No comments yet.</p>
+              <p className="muted">No Comments Yet.</p>
             ) : (
               ticket.comments.map((c) => (
                 <div key={c.id} className="comment">
                   <div className="muted" style={{ fontSize: "0.78rem", marginBottom: "0.35rem" }}>
-                    {c.authorType} · {fmtDate(c.createdAt)}
+                    <span className="cap">{c.authorType}</span> · {fmtDate(c.createdAt)}
                   </div>
                   <div style={{ whiteSpace: "pre-wrap" }}>{c.text}</div>
                 </div>
@@ -54,9 +55,9 @@ export default async function TicketDetailPage({
             )}
             <form action={addTicketComment} className="stack">
               <input type="hidden" name="ticketId" value={ticket.id} />
-              <textarea name="text" rows={4} placeholder="Reply as staff…" required />
+              <textarea name="text" rows={4} placeholder="Reply As Staff…" required />
               <button className="btn btn-primary" type="submit">
-                Send reply
+                Send Reply
               </button>
             </form>
           </div>
@@ -68,7 +69,7 @@ export default async function TicketDetailPage({
           </div>
           <div style={{ padding: "1rem" }}>
             <p>
-              <strong>Category:</strong> {ticket.category}
+              <strong>Category:</strong> {capitalize(ticket.category)}
             </p>
             <p>
               <strong>Department:</strong> {ticket.department?.name || "—"}
@@ -87,9 +88,17 @@ export default async function TicketDetailPage({
                 <option value="Closed">Closed</option>
               </select>
               <button className="btn btn-primary" type="submit">
-                Update status
+                Update Status
               </button>
             </form>
+            <div style={{ marginTop: "1rem" }}>
+              <ConfirmDeleteButton
+                action={deleteTicket}
+                id={ticket.id}
+                label="Delete Ticket"
+                confirmText="Delete this ticket and all comments?"
+              />
+            </div>
           </div>
         </div>
       </div>
