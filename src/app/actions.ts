@@ -27,7 +27,8 @@ export async function loginAction(formData: FormData) {
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });
-  redirect("/dashboard");
+  // Client navigates with overlay — avoids white flash from server redirect
+  return { ok: true as const };
 }
 
 export async function logoutAction() {

@@ -18,7 +18,6 @@ export type SessionUser = {
 
 const DEFAULT_ADMIN_EMAIL = "admin@apex.ai";
 const DEFAULT_ADMIN_PASSWORD = "Admin@12345";
-/** Correct bcrypt for Admin@12345 (seed SQL hash was wrong) */
 const DEFAULT_ADMIN_HASH =
   "$2b$10$J3AveI2gP7A9d3sbiCv8keOBc4DiLlcL4.RjFORhrj08h.Kee4Gsu";
 
@@ -77,36 +76,48 @@ function toSession(
   };
 }
 
-/** Login against staff_users (any tenant). Self-heals bad seed hash for default admin. */
+/** Login against staff_users. Faster findFirst + optional rehash to cost 8. */
 export async function authenticateStaff(emailRaw: string, password: string) {
   const email = emailRaw.trim().toLowerCase();
-  const candidates = await prisma.staffUser.findMany({
+  const staff = await prisma.staffUser.findFirst({
     where: { email, isActive: true },
     include: { tenant: { select: { id: true, slug: true, name: true } } },
   });
+  if (!staff) return null;
 
-  for (const staff of candidates) {
-    let ok = false;
-    try {
-      ok = await bcrypt.compare(password, staff.passwordHash);
-    } catch {
-      ok = false;
-    }
-
-    if (
-      !ok &&
-      email === DEFAULT_ADMIN_EMAIL &&
-      password === DEFAULT_ADMIN_PASSWORD
-    ) {
-      await prisma.staffUser.update({
-        where: { id: staff.id },
-        data: { passwordHash: DEFAULT_ADMIN_HASH },
-      });
-      ok = true;
-    }
-
-    if (!ok) continue;
-    return toSession(staff);
+  let ok = false;
+  try {
+    ok = await bcrypt.compare(password, staff.passwordHash);
+  } catch {
+    ok = false;
   }
-  return null;
+
+  if (
+    !ok &&
+    email === DEFAULT_ADMIN_EMAIL &&
+    password === DEFAULT_ADMIN_PASSWORD
+  ) {
+    await prisma.staffUser.update({
+      where: { id: staff.id },
+      data: { passwordHash: DEFAULT_ADMIN_HASH },
+    });
+    ok = true;
+  }
+
+  if (!ok) return null;
+
+  // Speed up future logins on free/cold hosts (bcrypt cost 8)
+  try {
+    const rounds = bcrypt.getRounds(staff.passwordHash);
+    if (rounds > 8) {
+      const faster = await bcrypt.hash(password, 8);
+      void prisma.staffUser
+        .update({ where: { id: staff.id }, data: { passwordHash: faster } })
+        .catch(() => undefined);
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return toSession(staff);
 }

@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { loginAction } from "@/app/actions";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [hiding, setHiding] = useState(false);
   const [pending, start] = useTransition();
+  const [booting, setBooting] = useState(false);
+
+  useEffect(() => {
+    router.prefetch("/dashboard");
+  }, [router]);
 
   useEffect(() => {
     if (!error) return;
@@ -24,6 +31,15 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
+      {(pending || booting) && (
+        <div className="boot-overlay" aria-live="polite">
+          <div className="boot-card">
+            <div className="boot-spinner" />
+            <strong>{booting ? "Opening dashboard…" : "Signing in…"}</strong>
+            <span>Please wait a moment</span>
+          </div>
+        </div>
+      )}
       <div className="login-card">
         <div className="login-brand">
           <div className="brand-mark">A</div>
@@ -47,7 +63,13 @@ export default function LoginPage() {
             setError(null);
             start(async () => {
               const res = await loginAction(fd);
-              if (res && !res.ok) setError(res.error);
+              if (!res || !res.ok) {
+                setError(res && "error" in res ? res.error : "Login failed");
+                return;
+              }
+              setBooting(true);
+              router.replace("/dashboard");
+              router.refresh();
             });
           }}
         >
@@ -58,8 +80,7 @@ export default function LoginPage() {
               name="email"
               type="email"
               required
-              defaultValue="admin@apex.ai"
-              placeholder="admin@apex.ai"
+              placeholder="you@company.com"
               autoComplete="username"
             />
           </div>
@@ -77,10 +98,10 @@ export default function LoginPage() {
           <button
             className="btn btn-primary"
             type="submit"
-            disabled={pending}
+            disabled={pending || booting}
             style={{ width: "100%", padding: "0.8rem" }}
           >
-            {pending ? "Signing In…" : "Sign In"}
+            {pending || booting ? "Signing In…" : "Sign In"}
           </button>
         </form>
       </div>

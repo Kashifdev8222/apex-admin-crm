@@ -1,10 +1,10 @@
-export default function DashboardLoading() {
+export default function Loading() {
   return (
     <div className="boot-screen">
       <div className="boot-card">
         <div className="boot-spinner" />
-        <strong>Loading dashboard…</strong>
-        <span>Fetching live data</span>
+        <strong>Loading…</strong>
+        <span>Please wait</span>
       </div>
     </div>
   );
