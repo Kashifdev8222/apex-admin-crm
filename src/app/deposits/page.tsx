@@ -3,9 +3,11 @@ import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { TxStatusActions } from "@/components/TxStatusActions";
+import { TruncateTip } from "@/components/TruncateTip";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { capitalize, fmtDate, money } from "@/lib/format";
+import { fmtDate, money } from "@/lib/format";
+import { displayComment, displayRejectReason } from "@/lib/tx-display";
 import { deleteTransaction, updateDepositStatus } from "@/app/actions";
 
 export default async function DepositsPage({
@@ -18,25 +20,34 @@ export default async function DepositsPage({
   const status = sp.status?.trim() || "";
   const tenant = sp.tenant?.trim() || "";
 
-  const tenants = await prisma.tenant.findMany({
-    orderBy: { name: "asc" },
-    select: { id: true, slug: true, name: true },
-  });
-
-  const rows = await prisma.transaction.findMany({
-    where: {
-      type: "DEPOSIT",
-      ...(status ? { status: status as never } : {}),
-      ...(tenant ? { tenantId: tenant } : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-    include: {
-      client: { select: { id: true, email: true, firstName: true, lastName: true } },
-      tenant: { select: { slug: true } },
-      account: { select: { name: true, externalLogin: true } },
-    },
-  });
+  const [tenants, rows] = await Promise.all([
+    prisma.tenant.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, slug: true, name: true },
+    }),
+    prisma.transaction.findMany({
+      where: {
+        type: "DEPOSIT",
+        ...(status ? { status: status as never } : {}),
+        ...(tenant ? { tenantId: tenant } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      select: {
+        id: true,
+        status: true,
+        amount: true,
+        currency: true,
+        comment: true,
+        note: true,
+        paymentMethod: true,
+        payCurrency: true,
+        createdAt: true,
+        client: { select: { id: true, email: true, firstName: true, lastName: true } },
+        tenant: { select: { slug: true } },
+      },
+    }),
+  ]);
 
   return (
     <AppShell user={user} title="Deposits">
@@ -65,7 +76,6 @@ export default async function DepositsPage({
       <div className="panel">
         <div className="panel-head">
           <h2>{rows.length} Deposits</h2>
-          <span className="muted">Pending · Completed · Canceled · Rejected</span>
         </div>
         <div className="table-wrap">
           <table className="data">
@@ -82,53 +92,50 @@ export default async function DepositsPage({
               </tr>
             </thead>
             <tbody>
-              {rows.map((t) => {
-                const comment = t.comment || t.note || t.paymentMethod || "—";
-                const reject =
-                  String(t.status).toUpperCase() === "FAILED"
-                    ? t.note || t.comment || "—"
-                    : "—";
-                return (
-                  <tr key={t.id}>
-                    <td>
-                      <Link href={`/clients/${t.client.id}`} className="cap">
-                        {t.client.firstName} {t.client.lastName}
-                      </Link>
-                      <div className="muted">{t.client.email}</div>
-                    </td>
-                    <td>{t.tenant.slug}</td>
-                    <td>{money(Number(t.amount), t.currency)}</td>
-                    <td>{String(comment)}</td>
-                    <td>{String(reject)}</td>
-                    <td>
-                      <StatusBadge
-                        status={
-                          t.status === "FAILED"
-                            ? "Rejected"
-                            : t.status === "CANCELED"
-                              ? "Canceled"
-                              : t.status
-                        }
+              {rows.map((t) => (
+                <tr key={t.id}>
+                  <td>
+                    <Link href={`/clients/${t.client.id}`} className="cap">
+                      {t.client.firstName} {t.client.lastName}
+                    </Link>
+                    <div className="muted">{t.client.email}</div>
+                  </td>
+                  <td>{t.tenant.slug}</td>
+                  <td>{money(Number(t.amount), t.currency)}</td>
+                  <td>
+                    <TruncateTip text={displayComment(t)} max={32} />
+                  </td>
+                  <td>
+                    <TruncateTip text={displayRejectReason(t)} max={24} />
+                  </td>
+                  <td>
+                    <StatusBadge
+                      status={
+                        t.status === "FAILED"
+                          ? "Rejected"
+                          : t.status === "CANCELED"
+                            ? "Canceled"
+                            : t.status
+                      }
+                    />
+                  </td>
+                  <td>{fmtDate(t.createdAt)}</td>
+                  <td>
+                    <div className="row-actions">
+                      <TxStatusActions
+                        id={t.id}
+                        currentStatus={t.status}
+                        action={updateDepositStatus}
                       />
-                    </td>
-                    <td>{fmtDate(t.createdAt)}</td>
-                    <td>
-                      <div className="row-actions">
-                        <TxStatusActions
-                          id={t.id}
-                          currentStatus={t.status}
-                          action={updateDepositStatus}
-                        />
-                        <ConfirmDeleteButton
-                          action={deleteTransaction}
-                          id={t.id}
-                          confirmText="Delete this deposit permanently?"
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+                      <ConfirmDeleteButton
+                        action={deleteTransaction}
+                        id={t.id}
+                        confirmText="Delete this deposit permanently?"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

@@ -1,8 +1,80 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useId, useState, useTransition } from "react";
 
-/** Deposit/Withdraw status actions: Completed, Pending, Canceled, Rejected (+ reason). */
+export function RejectReasonModal({
+  open,
+  onClose,
+  onConfirm,
+  pending,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: (reason: string) => void;
+  pending?: boolean;
+}) {
+  const [reason, setReason] = useState("");
+  const titleId = useId();
+
+  useEffect(() => {
+    if (open) setReason("");
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div className="modal-root" role="presentation" onClick={onClose}>
+      <div
+        className="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal-card__head">
+          <h3 id={titleId}>Rejection Reason</h3>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </div>
+        <p className="modal-card__hint">
+          This reason is shown to the client. The original comment stays unchanged.
+        </p>
+        <textarea
+          className="modal-textarea"
+          rows={4}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="e.g. Amount below minimum / Document mismatch / Test reject"
+          autoFocus
+        />
+        <div className="modal-card__actions">
+          <button type="button" className="btn btn-soft" onClick={onClose} disabled={pending}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn btn-bad"
+            disabled={pending}
+            onClick={() => onConfirm(reason.trim() || "Rejected by admin")}
+          >
+            {pending ? "Saving…" : "Confirm Reject"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function TxStatusActions({
   id,
   currentStatus,
@@ -12,73 +84,76 @@ export function TxStatusActions({
   currentStatus: string;
   action: (formData: FormData) => Promise<void>;
 }) {
-  const [pending, start] = useTransition();
+  const [busy, start] = useTransition();
+  const [modalOpen, setModalOpen] = useState(false);
   const st = String(currentStatus || "").toUpperCase();
-  const locked = st === "COMPLETED" || st === "CANCELED";
-  const open = st === "PENDING" || st === "PROCESSING" || st === "FAILED";
 
-  function run(status: string, askReason = false) {
+  function run(status: string, note?: string) {
     start(async () => {
-      let note = "";
-      if (askReason) {
-        const entered = window.prompt("Rejection reason (shown to client):", "");
-        if (entered === null) return;
-        note = entered.trim() || "Rejected by admin";
-      }
       const fd = new FormData();
       fd.set("id", id);
       fd.set("status", status);
       if (note) fd.set("note", note);
       await action(fd);
+      setModalOpen(false);
     });
   }
 
-  if (locked && st === "COMPLETED") {
+  if (st === "COMPLETED") {
     return <span className="muted">Completed</span>;
+  }
+  if (st === "CANCELED") {
+    return <span className="muted">Canceled</span>;
   }
 
   return (
-    <div className="row-actions">
-      {open || st === "FAILED" ? (
+    <>
+      <div className="row-actions">
         <button
           type="button"
           className="btn btn-ok btn-sm"
-          disabled={pending}
+          disabled={busy}
           onClick={() => run("COMPLETED")}
         >
           Complete
         </button>
-      ) : null}
-      {st === "PENDING" || st === "PROCESSING" ? (
-        <>
-          <button
-            type="button"
-            className="btn btn-warn btn-sm"
-            disabled={pending}
-            onClick={() => run("FAILED", true)}
-          >
-            Reject
-          </button>
+        {st === "PENDING" || st === "PROCESSING" ? (
+          <>
+            <button
+              type="button"
+              className="btn btn-warn btn-sm"
+              disabled={busy}
+              onClick={() => setModalOpen(true)}
+            >
+              Reject
+            </button>
+            <button
+              type="button"
+              className="btn btn-soft btn-sm"
+              disabled={busy}
+              onClick={() => run("CANCELED")}
+            >
+              Cancel
+            </button>
+          </>
+        ) : null}
+        {st === "FAILED" ? (
           <button
             type="button"
             className="btn btn-soft btn-sm"
-            disabled={pending}
-            onClick={() => run("CANCELED")}
+            disabled={busy}
+            onClick={() => run("PENDING")}
           >
-            Cancel
+            Reopen
           </button>
-        </>
-      ) : null}
-      {st === "FAILED" ? (
-        <button
-          type="button"
-          className="btn btn-soft btn-sm"
-          disabled={pending}
-          onClick={() => run("PENDING")}
-        >
-          Reopen Pending
-        </button>
-      ) : null}
-    </div>
+        ) : null}
+      </div>
+      <RejectReasonModal
+        open={modalOpen}
+        pending={busy}
+        onClose={() => setModalOpen(false)}
+        onConfirm={(reason) => run("FAILED", reason)}
+      />
+    </>
   );
 }

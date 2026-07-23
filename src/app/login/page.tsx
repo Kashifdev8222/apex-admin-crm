@@ -25,13 +25,18 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h1 style={{ fontFamily: "var(--font-display), Georgia, serif" }}>
-          Apex Admin CRM
-        </h1>
-        <p>
-          Sign in with your staff account. One panel for every ClientZone —
-          clients, deposits, KYC, tickets, and more.
-        </p>
+        <div className="login-brand">
+          <div className="brand-mark">A</div>
+          <div>
+            <h1 style={{ fontFamily: "var(--font-display), Georgia, serif" }}>
+              Apex Admin
+            </h1>
+            <div className="muted" style={{ fontSize: "0.8rem" }}>
+              Multi-tenant ClientZone CRM
+            </div>
+          </div>
+        </div>
+        <p>Sign in with your staff account to manage deposits, KYC, tickets, and more.</p>
         {error ? (
           <div className={`error${hiding ? " hiding" : ""}`} role="alert">
             {error}
@@ -73,14 +78,11 @@ export default function LoginPage() {
             className="btn btn-primary"
             type="submit"
             disabled={pending}
-            style={{ width: "100%", padding: "0.75rem" }}
+            style={{ width: "100%", padding: "0.8rem" }}
           >
             {pending ? "Signing In…" : "Sign In"}
           </button>
         </form>
-        <p className="muted" style={{ marginTop: "1rem", marginBottom: 0, fontSize: "0.8rem" }}>
-          Default Staff: admin@apex.ai
-        </p>
       </div>
     </div>
   );
