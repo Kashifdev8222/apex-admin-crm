@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Apex Admin CRM
 
-## Getting Started
+Standalone multi-tenant admin panel for all ClientZones. Uses **direct Prisma → Supabase Postgres** access (same DB as `crm-platform`). Does **not** call Nest admin APIs and does **not** modify ClientZone PHP or the API.
 
-First, run the development server:
+## Features
+
+- Staff login via `staff_users` table (any tenant)
+- Cross-tenant dashboard (filter by tenant where useful)
+- Clients, trading accounts, deposits, withdrawals, KYC, tickets, meetings, tenants
+- Deposit **Complete** credits balance (same rules as Nest)
+- Withdraw **Cancel/Fail** refunds held balance
+- KYC approve/reject, ticket reply + status
+
+## Local setup
+
+1. Copy env from the API project:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# from admin-crm/
+cp ../crm-platform/.env .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Add (or keep) in `.env.local`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+AUTH_SECRET=long-random-string
+DATABASE_URL=...   # same as crm-platform
+DIRECT_URL=...     # same as crm-platform
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Install & run:
 
-## Learn More
+```bash
+npm install
+npx prisma generate
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open http://localhost:3000  
+Login: existing staff (e.g. `admin@apex.ai` / your staff password).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy on Render
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. New **Web Service** → connect this `admin-crm` folder (or monorepo root with Root Directory = `admin-crm`).
+2. Settings:
+   - **Build:** `npm install && npx prisma generate && npm run build`
+   - **Start:** `npm run start` (or `node .next/standalone/server.js` if using standalone copy)
+   - **Node:** 20+
+3. Environment variables (same DB as API):
+   - `DATABASE_URL`
+   - `DIRECT_URL`
+   - `AUTH_SECRET` (strong random)
+   - Optional: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+4. After deploy, open the Render URL and sign in with staff credentials.
 
-## Deploy on Vercel
+## Safety
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Lives only under `admin-crm/` — ClientZone (`New folder/`) and Nest API (`crm-platform/`) are untouched.
+- Schema is a copy of `crm-platform/prisma/schema.prisma` (generate only; do not migrate from this app unless you intend to).

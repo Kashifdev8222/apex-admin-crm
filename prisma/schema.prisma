@@ -1,0 +1,343 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Tenant {
+  id               String   @id @default(uuid()) @db.Uuid
+  slug             String   @unique
+  name             String
+  brandId          String?  @map("brand_id")
+  businessUnitId   String?  @map("business_unit_id")
+  defaultMtGroup   String   @default("20900\\STANDART.USD") @map("default_mt_group")
+  defaultLeverage  Int      @default(100) @map("default_leverage")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  clients              Client[]
+  accounts             TradingAccount[]
+  transactions         Transaction[]
+  staffUsers           StaffUser[]
+  passwordResetTokens  PasswordResetToken[]
+  paymentMethods       PaymentMethod[]
+  transactionSources   TransactionSource[]
+  kycDocuments         KycDocument[]
+  ticketDepartments    TicketDepartment[]
+  tickets              Ticket[]
+  ticketComments       TicketComment[]
+  meetings             Meeting[]
+
+  @@map("tenants")
+}
+
+model Client {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  email          String
+  passwordHash   String    @map("password_hash")
+  firstName      String    @map("first_name")
+  lastName       String    @map("last_name")
+  phone          String?
+  country        String?   @default("PK")
+  language       String?   @default("bm")
+  customFields   String?   @default("") @map("custom_fields")
+  username       String?
+  birthDate      DateTime? @map("birth_date") @db.Date
+  status         String    @default("active")
+  isDemo         Boolean   @default(false) @map("is_demo")
+  tags           Json      @default("[]")
+  notes          Json      @default("[]")
+  brandId        String?   @map("brand_id")
+  businessUnitId String?   @map("business_unit_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  tenant       Tenant           @relation(fields: [tenantId], references: [id])
+  accounts     TradingAccount[]
+  transactions Transaction[]
+  sources      TransactionSource[]
+  documents    KycDocument[]
+  tickets      Ticket[]
+  meetings     Meeting[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("clients")
+}
+
+model KycDocument {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  clientId     String    @map("client_id") @db.Uuid
+  documentType String    @map("document_type")
+  description  String?
+  fileName     String    @map("file_name")
+  mimeType     String?   @map("mime_type")
+  fileSize     Int?      @map("file_size")
+  storagePath  String    @map("storage_path")
+  publicUrl    String?   @map("public_url")
+  status       String    @default("PENDING")
+  reviewNote   String?   @map("review_note")
+  reviewedBy   String?   @map("reviewed_by") @db.Uuid
+  reviewedAt   DateTime? @map("reviewed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  client Client @relation(fields: [clientId], references: [id])
+
+  @@index([tenantId, clientId])
+  @@index([tenantId, status])
+  @@map("kyc_documents")
+}
+
+model TransactionSource {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  clientId   String   @map("client_id") @db.Uuid
+  type       String   @default("Withdrawal")
+  source     String   @default("Crypto")
+  value      String
+  extraData  Json     @default("{}") @map("extra_data")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  client       Client        @relation(fields: [clientId], references: [id])
+  transactions Transaction[]
+
+  @@index([tenantId, clientId])
+  @@map("transaction_sources")
+}
+
+model StaffUser {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  email        String
+  passwordHash String   @map("password_hash")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  role         String   @default("admin")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  tenant           Tenant   @relation(fields: [tenantId], references: [id])
+  assignedTickets  Ticket[] @relation("TicketAssignee")
+  assignedMeetings Meeting[] @relation("MeetingAssignee")
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("staff_users")
+}
+
+model TicketDepartment {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id])
+  tickets Ticket[]
+
+  @@index([tenantId, isActive])
+  @@map("ticket_departments")
+}
+
+model Ticket {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  clientId         String    @map("client_id") @db.Uuid
+  departmentId     String?   @map("department_id") @db.Uuid
+  category         String    @default("Other")
+  title            String
+  status           String    @default("New")
+  assignedStaffId  String?   @map("assigned_staff_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  tenant      Tenant            @relation(fields: [tenantId], references: [id])
+  client      Client            @relation(fields: [clientId], references: [id])
+  department  TicketDepartment? @relation(fields: [departmentId], references: [id])
+  assignee    StaffUser?        @relation("TicketAssignee", fields: [assignedStaffId], references: [id])
+  comments    TicketComment[]
+
+  @@index([tenantId, clientId])
+  @@index([tenantId, status])
+  @@map("tickets")
+}
+
+model TicketComment {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  ticketId   String   @map("ticket_id") @db.Uuid
+  authorType String   @default("client") @map("author_type")
+  authorId   String   @map("author_id") @db.Uuid
+  text       String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@map("ticket_comments")
+}
+
+model Meeting {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  clientId         String   @map("client_id") @db.Uuid
+  title            String
+  description      String   @default("")
+  date             DateTime
+  meetingPeriod    Int      @default(30) @map("meeting_period")
+  importance       String   @default("normal")
+  status           String   @default("scheduled")
+  isUserConfirmed  Boolean  @default(true) @map("is_user_confirmed")
+  assignedStaffId  String?  @map("assigned_staff_id") @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant     @relation(fields: [tenantId], references: [id])
+  client   Client     @relation(fields: [clientId], references: [id])
+  assignee StaffUser? @relation("MeetingAssignee", fields: [assignedStaffId], references: [id])
+
+  @@index([tenantId, clientId])
+  @@index([tenantId, date])
+  @@index([tenantId, status])
+  @@map("meetings")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  userType  String    @map("user_type")
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, userType, userId])
+  @@map("password_reset_tokens")
+}
+
+model TradingAccount {
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  clientId      String   @map("client_id") @db.Uuid
+  name          String   @default("Main Account")
+  groupName     String   @map("group_name")
+  leverage      Int      @default(100)
+  currency      String   @default("USD")
+  balance       Decimal  @default(0) @db.Decimal(18, 2)
+  equity        Decimal  @default(0) @db.Decimal(18, 2)
+  credit        Decimal  @default(0) @db.Decimal(18, 2)
+  margin        Decimal  @default(0) @db.Decimal(18, 2)
+  freeMargin    Decimal  @default(0) @db.Decimal(18, 2)
+  isDemoAccount Boolean  @default(false) @map("is_demo_account")
+  isActive      Boolean  @default(true) @map("is_active")
+  externalLogin String?  @map("external_login")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  client       Client        @relation(fields: [clientId], references: [id])
+  transactions Transaction[]
+
+  @@index([tenantId, clientId])
+  @@map("trading_accounts")
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAW
+  ADJUSTMENT
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELED
+}
+
+model PaymentMethod {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  type      String
+  name      String
+  isEnabled Boolean  @default(true) @map("is_enabled")
+  config    Json     @default("{}")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, type])
+  @@index([tenantId])
+  @@map("payment_methods")
+}
+
+model Transaction {
+  id             String            @id @default(uuid()) @db.Uuid
+  tenantId       String            @map("tenant_id") @db.Uuid
+  clientId       String            @map("client_id") @db.Uuid
+  accountId      String            @map("account_id") @db.Uuid
+  type           TransactionType
+  status         TransactionStatus @default(PENDING)
+  amount         Decimal           @db.Decimal(18, 2)
+  currency       String            @default("USD")
+  paymentMethod  String?           @map("payment_method")
+  externalRef    String?           @map("external_ref")
+  note           String?
+  payCurrency    String?           @map("pay_currency")
+  priceCurrency  String?           @map("price_currency")
+  network        String?
+  redirectUrl    String?           @map("redirect_url")
+  invoiceAddress String?           @map("invoice_address")
+  meta           Json              @default("{}")
+  transactionSourceId String?      @map("transaction_source_id") @db.Uuid
+  comment        String?
+  tpNumber       String?           @map("tp_number")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [id])
+  client            Client             @relation(fields: [clientId], references: [id])
+  account           TradingAccount     @relation(fields: [accountId], references: [id])
+  transactionSource TransactionSource? @relation(fields: [transactionSourceId], references: [id])
+
+  @@index([tenantId, clientId])
+  @@index([accountId])
+  @@map("transactions")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String?  @map("tenant_id") @db.Uuid
+  actorType  String   @map("actor_type")
+  actorId    String?  @map("actor_id")
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  meta       Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([tenantId])
+  @@map("audit_logs")
+}

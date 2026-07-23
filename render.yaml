@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: apex-admin-crm
+    runtime: node
+    plan: free
+    rootDir: admin-crm
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: AUTH_SECRET
+        generateValue: true

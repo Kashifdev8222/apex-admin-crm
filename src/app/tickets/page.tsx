@@ -1,0 +1,89 @@
+import Link from "next/link";
+import { AppShell } from "@/components/AppShell";
+import { StatusBadge } from "@/components/StatusBadge";
+import { requireUser } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
+import { fmtDate } from "@/lib/format";
+
+export default async function TicketsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const user = await requireUser();
+  const sp = await searchParams;
+  const status = sp.status?.trim() || "";
+
+  const rows = await prisma.ticket.findMany({
+    where: status ? { status } : {},
+    orderBy: { updatedAt: "desc" },
+    take: 150,
+    include: {
+      client: { select: { id: true, email: true, firstName: true, lastName: true } },
+      tenant: { select: { slug: true } },
+      department: { select: { name: true } },
+      _count: { select: { comments: true } },
+    },
+  });
+
+  return (
+    <AppShell user={user} title="Tickets">
+      <form className="filters" method="get">
+        <select name="status" defaultValue={status}>
+          <option value="">All statuses</option>
+          <option value="New">New</option>
+          <option value="Open">Open</option>
+          <option value="Pending">Pending</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Resolved">Resolved</option>
+          <option value="Closed">Closed</option>
+        </select>
+        <button className="btn btn-primary" type="submit">
+          Filter
+        </button>
+      </form>
+
+      <div className="panel">
+        <div className="panel-head">
+          <h2>{rows.length} tickets</h2>
+        </div>
+        <div className="table-wrap">
+          <table className="data">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Client</th>
+                <th>Tenant</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Comments</th>
+                <th>Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((t) => (
+                <tr key={t.id}>
+                  <td>
+                    <Link href={`/tickets/${t.id}`}>{t.title}</Link>
+                    <div className="muted">{t.department?.name || "—"}</div>
+                  </td>
+                  <td>
+                    {t.client.firstName} {t.client.lastName}
+                    <div className="muted">{t.client.email}</div>
+                  </td>
+                  <td>{t.tenant.slug}</td>
+                  <td>{t.category}</td>
+                  <td>
+                    <StatusBadge status={t.status} />
+                  </td>
+                  <td>{t._count.comments}</td>
+                  <td>{fmtDate(t.updatedAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </AppShell>
+  );
+}
