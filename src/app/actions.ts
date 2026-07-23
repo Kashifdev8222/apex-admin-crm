@@ -69,11 +69,13 @@ export async function updateDepositStatus(formData: FormData) {
         status,
         ...(status === "FAILED"
           ? { note: note || "Rejected by admin" }
-          : status === "COMPLETED" || status === "PENDING" || status === "PROCESSING"
-            ? { note: null }
-            : note
-              ? { note }
-              : {}),
+          : status === "CANCELED"
+            ? { note: note || "Canceled by admin" }
+            : status === "COMPLETED" || status === "PENDING" || status === "PROCESSING"
+              ? { note: null }
+              : note
+                ? { note }
+                : {}),
       },
     });
     if (status === "COMPLETED" && tx.status !== "COMPLETED") {
@@ -125,11 +127,13 @@ export async function updateWithdrawStatus(formData: FormData) {
         status,
         ...(status === "FAILED"
           ? { note: note || "Rejected by admin" }
-          : status === "COMPLETED" || status === "PENDING" || status === "PROCESSING"
-            ? { note: null }
-            : note
-              ? { note }
-              : {}),
+          : status === "CANCELED"
+            ? { note: note || "Canceled by admin" }
+            : status === "COMPLETED" || status === "PENDING" || status === "PROCESSING"
+              ? { note: null }
+              : note
+                ? { note }
+                : {}),
       },
     });
     if (

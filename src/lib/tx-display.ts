@@ -1,4 +1,4 @@
-/** comment = client deposit/withdraw text; note = rejection reason only when FAILED */
+/** comment = client deposit/withdraw text; note = reason for Rejected OR Canceled */
 export function displayComment(row: {
   comment?: string | null;
   paymentMethod?: string | null;
@@ -15,7 +15,8 @@ export function displayRejectReason(row: {
   note?: string | null;
   comment?: string | null;
 }) {
-  if (String(row.status).toUpperCase() !== "FAILED") return "—";
+  const st = String(row.status).toUpperCase();
+  if (st !== "FAILED" && st !== "CANCELED" && st !== "CANCELLED") return "—";
   const note = String(row.note || "").trim();
   const comment = String(row.comment || "").trim();
   if (!note || note === comment) return "—";

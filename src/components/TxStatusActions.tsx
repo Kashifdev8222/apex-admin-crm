@@ -2,23 +2,26 @@
 
 import { useEffect, useId, useState, useTransition } from "react";
 
-export function RejectReasonModal({
-  open,
+type ReasonMode = "reject" | "cancel" | null;
+
+export function StatusReasonModal({
+  mode,
   onClose,
   onConfirm,
   pending,
 }: {
-  open: boolean;
+  mode: ReasonMode;
   onClose: () => void;
   onConfirm: (reason: string) => void;
   pending?: boolean;
 }) {
   const [reason, setReason] = useState("");
   const titleId = useId();
+  const open = mode !== null;
 
   useEffect(() => {
     if (open) setReason("");
-  }, [open]);
+  }, [open, mode]);
 
   useEffect(() => {
     if (!open) return;
@@ -29,7 +32,18 @@ export function RejectReasonModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mode) return null;
+
+  const isReject = mode === "reject";
+  const title = isReject ? "Rejection Reason" : "Cancel Reason";
+  const hint = isReject
+    ? "Shown to the client as the rejection reason. Original comment stays unchanged."
+    : "Shown to the client as the cancel reason. Original comment stays unchanged.";
+  const placeholder = isReject
+    ? "e.g. Amount below minimum / KYC mismatch"
+    : "e.g. Client requested cancel / Duplicate request";
+  const confirmLabel = isReject ? "Confirm Reject" : "Confirm Cancel";
+  const defaultReason = isReject ? "Rejected by admin" : "Canceled by admin";
 
   return (
     <div className="modal-root" role="presentation" onClick={onClose}>
@@ -41,33 +55,31 @@ export function RejectReasonModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="modal-card__head">
-          <h3 id={titleId}>Rejection Reason</h3>
+          <h3 id={titleId}>{title}</h3>
           <button type="button" className="modal-close" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
-        <p className="modal-card__hint">
-          This reason is shown to the client. The original comment stays unchanged.
-        </p>
+        <p className="modal-card__hint">{hint}</p>
         <textarea
           className="modal-textarea"
           rows={4}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="e.g. Amount below minimum / Document mismatch / Test reject"
+          placeholder={placeholder}
           autoFocus
         />
         <div className="modal-card__actions">
           <button type="button" className="btn btn-soft" onClick={onClose} disabled={pending}>
-            Cancel
+            Close
           </button>
           <button
             type="button"
-            className="btn btn-bad"
+            className={isReject ? "btn btn-bad" : "btn btn-warn"}
             disabled={pending}
-            onClick={() => onConfirm(reason.trim() || "Rejected by admin")}
+            onClick={() => onConfirm(reason.trim() || defaultReason)}
           >
-            {pending ? "Saving…" : "Confirm Reject"}
+            {pending ? "Saving…" : confirmLabel}
           </button>
         </div>
       </div>
@@ -85,7 +97,7 @@ export function TxStatusActions({
   action: (formData: FormData) => Promise<void>;
 }) {
   const [busy, start] = useTransition();
-  const [modalOpen, setModalOpen] = useState(false);
+  const [mode, setMode] = useState<ReasonMode>(null);
   const st = String(currentStatus || "").toUpperCase();
 
   function run(status: string, note?: string) {
@@ -95,7 +107,7 @@ export function TxStatusActions({
       fd.set("status", status);
       if (note) fd.set("note", note);
       await action(fd);
-      setModalOpen(false);
+      setMode(null);
     });
   }
 
@@ -123,7 +135,7 @@ export function TxStatusActions({
               type="button"
               className="btn btn-warn btn-sm"
               disabled={busy}
-              onClick={() => setModalOpen(true)}
+              onClick={() => setMode("reject")}
             >
               Reject
             </button>
@@ -131,7 +143,7 @@ export function TxStatusActions({
               type="button"
               className="btn btn-soft btn-sm"
               disabled={busy}
-              onClick={() => run("CANCELED")}
+              onClick={() => setMode("cancel")}
             >
               Cancel
             </button>
@@ -148,11 +160,13 @@ export function TxStatusActions({
           </button>
         ) : null}
       </div>
-      <RejectReasonModal
-        open={modalOpen}
+      <StatusReasonModal
+        mode={mode}
         pending={busy}
-        onClose={() => setModalOpen(false)}
-        onConfirm={(reason) => run("FAILED", reason)}
+        onClose={() => setMode(null)}
+        onConfirm={(reason) =>
+          run(mode === "cancel" ? "CANCELED" : "FAILED", reason)
+        }
       />
     </>
   );
