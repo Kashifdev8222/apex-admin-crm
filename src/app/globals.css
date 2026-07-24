@@ -494,14 +494,18 @@ table.data th {
 
 table.data th.sr-col,
 table.data td.sr-col {
-  width: 48px;
-  min-width: 48px;
+  width: 52px;
+  min-width: 52px;
   text-align: center;
-  color: #94a3b8;
-  font-variant-numeric: tabular-nums;
-  font-weight: 650;
-  padding-left: 0.75rem;
-  padding-right: 0.4rem;
+  color: #64748b;
+  font-family: var(--font-sans), "Plus Jakarta Sans", "Segoe UI", sans-serif;
+  font-variant-numeric: normal;
+  font-feature-settings: normal;
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  padding-left: 0.85rem;
+  padding-right: 0.45rem;
 }
 
 table.data tbody tr:last-child td { border-bottom: 0; }
@@ -913,6 +917,43 @@ table.data .muted {
   font-size: 0.95rem;
   min-width: 0;
   width: 100%;
+}
+
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  padding-right: 2.75rem !important;
+  width: 100%;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #64748b;
+  border-radius: 8px;
+}
+
+.password-toggle:hover {
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.password-toggle svg {
+  width: 18px;
+  height: 18px;
 }
 
 .btn-login {
