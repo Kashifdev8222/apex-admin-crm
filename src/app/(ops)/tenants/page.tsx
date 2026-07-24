@@ -1,12 +1,8 @@
-import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { fmtDate } from "@/lib/format";
 
 export default async function TenantsPage() {
-  const user = await requireUser();
-
   const rows = await prisma.tenant.findMany({
     orderBy: { createdAt: "asc" },
     include: {
@@ -23,7 +19,7 @@ export default async function TenantsPage() {
   });
 
   return (
-    <AppShell user={user} title="Tenants">
+    <>
       <div className="panel">
         <div className="panel-head">
           <h2>{rows.length} ClientZones</h2>
@@ -63,6 +59,6 @@ export default async function TenantsPage() {
           </table>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

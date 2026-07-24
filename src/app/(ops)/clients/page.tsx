@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
-import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { fmtDate, money } from "@/lib/format";
 import { deleteClient } from "@/app/actions";
@@ -12,7 +10,6 @@ export default async function ClientsPage({
 }: {
   searchParams: Promise<{ q?: string; tenant?: string }>;
 }) {
-  const user = await requireUser();
   const sp = await searchParams;
   const q = sp.q?.trim() || "";
   const tenant = sp.tenant?.trim() || "";
@@ -48,7 +45,7 @@ export default async function ClientsPage({
   });
 
   return (
-    <AppShell user={user} title="Clients">
+    <>
       <form className="filters" method="get">
         <input
           name="q"
@@ -123,6 +120,6 @@ export default async function ClientsPage({
           </table>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

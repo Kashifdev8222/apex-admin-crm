@@ -1,10 +1,8 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
 import { TxStatusActions } from "@/components/TxStatusActions";
 import { TruncateTip } from "@/components/TruncateTip";
-import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { fmtDate, money } from "@/lib/format";
 import { displayComment, displayRejectReason } from "@/lib/tx-display";
@@ -15,7 +13,6 @@ export default async function WithdrawalsPage({
 }: {
   searchParams: Promise<{ status?: string; tenant?: string }>;
 }) {
-  const user = await requireUser();
   const sp = await searchParams;
   const status = sp.status?.trim() || "";
   const tenant = sp.tenant?.trim() || "";
@@ -49,7 +46,7 @@ export default async function WithdrawalsPage({
   ]);
 
   return (
-    <AppShell user={user} title="Withdrawals">
+    <>
       <form className="filters" method="get">
         <select name="status" defaultValue={status} aria-label="Status">
           <option value="">All Statuses</option>
@@ -138,6 +135,6 @@ export default async function WithdrawalsPage({
           </table>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

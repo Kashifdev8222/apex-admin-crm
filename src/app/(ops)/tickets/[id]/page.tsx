@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
-import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { capitalize, fmtDate } from "@/lib/format";
 import { addTicketComment, deleteTicket, updateTicketStatus } from "@/app/actions";
@@ -13,7 +11,6 @@ export default async function TicketDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const user = await requireUser();
   const { id } = await params;
 
   const ticket = await prisma.ticket.findFirst({
@@ -28,7 +25,7 @@ export default async function TicketDetailPage({
   if (!ticket) notFound();
 
   return (
-    <AppShell user={user} title={ticket.title}>
+    <>
       <p className="muted" style={{ marginTop: 0 }}>
         <Link href="/tickets">← Tickets</Link> · {ticket.tenant.slug} ·{" "}
         {ticket.client.email}
@@ -102,6 +99,6 @@ export default async function TicketDetailPage({
           </div>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

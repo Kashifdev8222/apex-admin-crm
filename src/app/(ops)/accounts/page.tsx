@@ -1,7 +1,5 @@
-import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
-import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { fmtDate, money } from "@/lib/format";
 import { deleteAccount } from "@/app/actions";
@@ -12,7 +10,6 @@ export default async function AccountsPage({
 }: {
   searchParams: Promise<{ tenant?: string }>;
 }) {
-  const user = await requireUser();
   const sp = await searchParams;
   const tenant = sp.tenant?.trim() || "";
 
@@ -32,7 +29,7 @@ export default async function AccountsPage({
   });
 
   return (
-    <AppShell user={user} title="Trading Accounts">
+    <>
       <form className="filters" method="get">
         <select name="tenant" defaultValue={tenant} aria-label="Tenant">
           <option value="">All Tenants</option>
@@ -97,6 +94,6 @@ export default async function AccountsPage({
           </table>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

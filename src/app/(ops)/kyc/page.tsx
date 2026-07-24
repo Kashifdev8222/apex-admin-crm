@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
-import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { capitalize, fmtDate } from "@/lib/format";
 import { deleteKycDocument, reviewKyc } from "@/app/actions";
@@ -12,7 +10,6 @@ export default async function KycPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  const user = await requireUser();
   const sp = await searchParams;
   const status = sp.status?.trim() || "PENDING";
 
@@ -27,7 +24,7 @@ export default async function KycPage({
   });
 
   return (
-    <AppShell user={user} title="KYC Review">
+    <>
       <form className="filters" method="get">
         <select name="status" defaultValue={status} aria-label="Status">
           <option value="PENDING">Pending</option>
@@ -117,6 +114,6 @@ export default async function KycPage({
           </table>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

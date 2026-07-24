@@ -110,25 +110,23 @@ function titleFromPath(pathname: string) {
       (l.href !== "/dashboard" && pathname.startsWith(`${l.href}/`)),
   );
   if (hit) return hit.label;
-  if (pathname.startsWith("/clients/")) return "Client Detail";
-  if (pathname.startsWith("/tickets/")) return "Ticket Detail";
+  if (pathname.startsWith("/clients/")) return "Client";
+  if (pathname.startsWith("/tickets/")) return "Ticket";
   return "Operations";
 }
 
 export function AppShell({
   user,
-  title,
   children,
 }: {
   user: SessionUser;
-  title?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [menuOpen, setMenuOpen] = useState(false);
-  const pageTitle = title || titleFromPath(pathname);
+  const pageTitle = titleFromPath(pathname);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -207,7 +205,7 @@ export function AppShell({
           </div>
           <ProfileMenu user={user} />
         </header>
-        <div className={`content${pending ? " navigating" : ""}`}>{children}</div>
+        <div className="content">{children}</div>
       </div>
     </div>
   );

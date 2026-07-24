@@ -1,4 +1,3 @@
-import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
@@ -53,7 +52,7 @@ export default async function DashboardPage() {
   const firstName = user.firstName || "there";
 
   return (
-    <AppShell user={user} title="Dashboard">
+    <>
       <div className="page-intro">
         <p>
           Welcome back, <strong className="cap">{firstName}</strong>. Here’s a
@@ -146,6 +145,6 @@ export default async function DashboardPage() {
           </table>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

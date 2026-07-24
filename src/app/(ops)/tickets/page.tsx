@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
-import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { capitalize, fmtDate } from "@/lib/format";
 
@@ -10,7 +8,6 @@ export default async function TicketsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
-  const user = await requireUser();
   const sp = await searchParams;
   const status = sp.status?.trim() || "";
 
@@ -27,7 +24,7 @@ export default async function TicketsPage({
   });
 
   return (
-    <AppShell user={user} title="Tickets">
+    <>
       <form className="filters" method="get">
         <select name="status" defaultValue={status} aria-label="Status">
           <option value="">All Statuses</option>
@@ -86,6 +83,6 @@ export default async function TicketsPage({
           </table>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

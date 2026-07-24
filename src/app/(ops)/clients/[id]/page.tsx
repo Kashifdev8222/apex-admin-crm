@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
-import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { capitalize, fmtDate, money } from "@/lib/format";
 import { deleteClient, updateClientStatus } from "@/app/actions";
@@ -13,7 +11,6 @@ export default async function ClientDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const user = await requireUser();
   const { id } = await params;
 
   const client = await prisma.client.findFirst({
@@ -29,7 +26,7 @@ export default async function ClientDetailPage({
   if (!client) notFound();
 
   return (
-    <AppShell user={user} title={`${client.firstName} ${client.lastName}`}>
+    <>
       <p className="muted" style={{ marginTop: 0 }}>
         <Link href="/clients">← Clients</Link> · {client.tenant.name} ({client.tenant.slug})
       </p>
@@ -135,6 +132,6 @@ export default async function ClientDetailPage({
           </table>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }
