@@ -76,12 +76,21 @@ function toSession(
   };
 }
 
-/** Login against staff_users. Faster findFirst + optional rehash to cost 8. */
+/** Login against staff_users. Faster findFirst; never block on rehash. */
 export async function authenticateStaff(emailRaw: string, password: string) {
   const email = emailRaw.trim().toLowerCase();
   const staff = await prisma.staffUser.findFirst({
     where: { email, isActive: true },
-    include: { tenant: { select: { id: true, slug: true, name: true } } },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      role: true,
+      passwordHash: true,
+      tenantId: true,
+      tenant: { select: { slug: true } },
+    },
   });
   if (!staff) return null;
 
@@ -97,6 +106,7 @@ export async function authenticateStaff(emailRaw: string, password: string) {
     email === DEFAULT_ADMIN_EMAIL &&
     password === DEFAULT_ADMIN_PASSWORD
   ) {
+    // Sync fix only for known default admin — rare path
     await prisma.staffUser.update({
       where: { id: staff.id },
       data: { passwordHash: DEFAULT_ADMIN_HASH },
@@ -106,18 +116,21 @@ export async function authenticateStaff(emailRaw: string, password: string) {
 
   if (!ok) return null;
 
-  // Speed up future logins on free/cold hosts (bcrypt cost 8)
-  try {
-    const rounds = bcrypt.getRounds(staff.passwordHash);
-    if (rounds > 8) {
-      const faster = await bcrypt.hash(password, 8);
-      void prisma.staffUser
-        .update({ where: { id: staff.id }, data: { passwordHash: faster } })
-        .catch(() => undefined);
+  // Rehash off the login critical path (do not await)
+  void (async () => {
+    try {
+      const rounds = bcrypt.getRounds(staff.passwordHash);
+      if (rounds > 8) {
+        const faster = await bcrypt.hash(password, 8);
+        await prisma.staffUser.update({
+          where: { id: staff.id },
+          data: { passwordHash: faster },
+        });
+      }
+    } catch {
+      /* ignore */
     }
-  } catch {
-    /* ignore */
-  }
+  })();
 
   return toSession(staff);
 }

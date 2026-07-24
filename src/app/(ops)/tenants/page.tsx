@@ -25,52 +25,93 @@ export default async function TenantsPage() {
         <p>Tenant (ClientZone) settings: name, MT group, leverage, and active flag.</p>
       </div>
 
-      <div className="stack">
-        {rows.map((t) => (
-          <div key={t.id} className="panel">
-            <div className="panel-head">
-              <h2>
-                {t.name}{" "}
-                <span className="muted" style={{ fontWeight: 500, fontSize: "0.85rem" }}>
-                  ({t.slug})
-                </span>
-              </h2>
-              <StatusBadge status={t.isActive ? "ACTIVE" : "INACTIVE"} />
-            </div>
-            <div style={{ padding: "1rem" }}>
-              <p className="muted" style={{ marginTop: 0 }}>
-                Clients {t._count.clients} · Accounts {t._count.accounts} · Tx{" "}
-                {t._count.transactions} · Tickets {t._count.tickets} · Staff{" "}
-                {t._count.staffUsers} · Created {fmtDate(t.createdAt)}
-              </p>
-              <form action={updateTenant} className="filters">
-                <input type="hidden" name="id" value={t.id} />
-                <input name="name" defaultValue={t.name} required aria-label="Name" />
-                <input
-                  name="defaultMtGroup"
-                  defaultValue={t.defaultMtGroup}
-                  placeholder="MT group"
-                  aria-label="MT group"
-                  style={{ minWidth: 200 }}
-                />
-                <input
-                  name="defaultLeverage"
-                  type="number"
-                  defaultValue={t.defaultLeverage}
-                  aria-label="Leverage"
-                  style={{ minWidth: 100 }}
-                />
-                <select name="isActive" defaultValue={t.isActive ? "true" : "false"}>
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
-                <button className="btn btn-primary" type="submit">
-                  Save
-                </button>
-              </form>
-            </div>
-          </div>
-        ))}
+      <div className="panel">
+        <div className="panel-head">
+          <h2>{rows.length} Tenants</h2>
+        </div>
+        <div className="table-wrap">
+          <table className="data">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>MT Group</th>
+                <th>Leverage</th>
+                <th>Clients</th>
+                <th>Accounts</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((t) => {
+                const formId = `tenant-${t.id}`;
+                return (
+                  <tr key={t.id}>
+                    <td>
+                      <input
+                        form={formId}
+                        name="name"
+                        defaultValue={t.name}
+                        required
+                        aria-label="Name"
+                        className="table-input"
+                      />
+                    </td>
+                    <td>{t.slug}</td>
+                    <td>
+                      <input
+                        form={formId}
+                        name="defaultMtGroup"
+                        defaultValue={t.defaultMtGroup}
+                        aria-label="MT group"
+                        className="table-input"
+                        style={{ minWidth: 160 }}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        form={formId}
+                        name="defaultLeverage"
+                        type="number"
+                        defaultValue={t.defaultLeverage}
+                        aria-label="Leverage"
+                        className="table-input table-input--sm"
+                      />
+                    </td>
+                    <td>{t._count.clients}</td>
+                    <td>{t._count.accounts}</td>
+                    <td>
+                      <div className="row-actions">
+                        <select
+                          form={formId}
+                          name="isActive"
+                          defaultValue={t.isActive ? "true" : "false"}
+                          aria-label="Active"
+                          className="table-input"
+                        >
+                          <option value="true">Active</option>
+                          <option value="false">Inactive</option>
+                        </select>
+                        <StatusBadge status={t.isActive ? "ACTIVE" : "INACTIVE"} />
+                      </div>
+                    </td>
+                    <td>{fmtDate(t.createdAt)}</td>
+                    <td>
+                      <form id={formId} action={updateTenant}>
+                        <input type="hidden" name="id" value={t.id} />
+                        <button className="btn btn-soft btn-sm" type="submit">
+                          Save
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );

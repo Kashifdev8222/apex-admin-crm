@@ -67,8 +67,12 @@ export default async function KycPage({
                   <td>{d.tenant.slug}</td>
                   <td>{capitalize(d.documentType)}</td>
                   <td>
-                    {d.publicUrl ? (
-                      <KycPreviewButton url={d.publicUrl} fileName={d.fileName} />
+                    {d.publicUrl || d.storagePath ? (
+                      <KycPreviewButton
+                        id={d.id}
+                        fileName={d.fileName}
+                        fallbackUrl={d.publicUrl}
+                      />
                     ) : (
                       d.fileName
                     )}

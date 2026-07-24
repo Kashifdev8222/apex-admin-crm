@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import type { SessionUser } from "@/lib/auth";
 import { ProfileMenu } from "@/components/ProfileMenu";
 
@@ -153,12 +153,24 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [pending, start] = useTransition();
   const [menuOpen, setMenuOpen] = useState(false);
   const pageTitle = titleFromPath(pathname);
 
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    links.forEach((l) => router.prefetch(l.href));
+  }, [router]);
+
+  function go(href: string) {
+    if (href === pathname) return;
+    setMenuOpen(false);
+    start(() => router.push(href));
+  }
 
   return (
     <div className="shell">
@@ -187,6 +199,10 @@ export function AppShell({
                 href={l.href}
                 prefetch
                 className={active ? "active" : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  go(l.href);
+                }}
               >
                 <span className="nav-icon" aria-hidden>
                   {l.icon}
@@ -199,6 +215,7 @@ export function AppShell({
       </aside>
 
       <div className="main">
+        <div className={`route-progress${pending ? " on" : ""}`} aria-hidden />
         <header className="topbar">
           <div className="topbar-left">
             <button
@@ -217,7 +234,7 @@ export function AppShell({
           </div>
           <ProfileMenu user={user} />
         </header>
-        <div className="content">{children}</div>
+        <div className={`content${pending ? " navigating" : ""}`}>{children}</div>
       </div>
     </div>
   );

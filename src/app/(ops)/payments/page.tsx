@@ -64,32 +64,58 @@ export default async function PaymentsPage() {
                   </td>
                 </tr>
               ) : (
-                rows.map((m) => (
-                  <tr key={m.id}>
-                    <td colSpan={6} style={{ padding: "0.65rem 1rem" }}>
-                      <form action={updatePaymentMethod} className="row-actions" style={{ flexWrap: "wrap" }}>
-                        <input type="hidden" name="id" value={m.id} />
-                        <input name="name" defaultValue={m.name} required style={{ minWidth: 140 }} />
-                        <span className="muted">{m.type}</span>
-                        <span className="muted">{m.tenant.slug}</span>
+                rows.map((m) => {
+                  const formId = `pm-${m.id}`;
+                  return (
+                    <tr key={m.id}>
+                      <td>
                         <input
+                          form={formId}
+                          name="name"
+                          defaultValue={m.name}
+                          required
+                          aria-label="Name"
+                          className="table-input"
+                        />
+                      </td>
+                      <td>{m.type}</td>
+                      <td>{m.tenant.slug}</td>
+                      <td>
+                        <input
+                          form={formId}
                           name="sortOrder"
                           type="number"
                           defaultValue={m.sortOrder}
-                          style={{ width: 72, minWidth: 72 }}
+                          aria-label="Sort"
+                          className="table-input table-input--sm"
                         />
-                        <select name="isEnabled" defaultValue={m.isEnabled ? "true" : "false"}>
-                          <option value="true">Enabled</option>
-                          <option value="false">Disabled</option>
-                        </select>
-                        <StatusBadge status={m.isEnabled ? "ACTIVE" : "INACTIVE"} />
-                        <button className="btn btn-soft btn-sm" type="submit">
-                          Save
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td>
+                        <div className="row-actions">
+                          <select
+                            form={formId}
+                            name="isEnabled"
+                            defaultValue={m.isEnabled ? "true" : "false"}
+                            aria-label="Enabled"
+                            className="table-input"
+                          >
+                            <option value="true">Enabled</option>
+                            <option value="false">Disabled</option>
+                          </select>
+                          <StatusBadge status={m.isEnabled ? "ACTIVE" : "INACTIVE"} />
+                        </div>
+                      </td>
+                      <td>
+                        <form id={formId} action={updatePaymentMethod}>
+                          <input type="hidden" name="id" value={m.id} />
+                          <button className="btn btn-soft btn-sm" type="submit">
+                            Save
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

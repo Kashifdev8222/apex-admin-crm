@@ -2,25 +2,31 @@
 
 import { useEffect, useState } from "react";
 
-function isImage(url: string, fileName: string) {
-  return /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(fileName || url);
+function isImage(fileName: string) {
+  return /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(fileName);
 }
 
-function isPdf(url: string, fileName: string) {
-  return /\.pdf(\?|$)/i.test(fileName || url);
+function isPdf(fileName: string) {
+  return /\.pdf$/i.test(fileName);
 }
 
 export function KycPreviewButton({
-  url,
+  id,
   fileName,
+  fallbackUrl,
 }: {
-  url: string;
+  id: string;
   fileName: string;
+  fallbackUrl?: string | null;
 }) {
   const [open, setOpen] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const previewUrl = `/api/kyc/${id}/file`;
+  const openUrl = previewUrl;
 
   useEffect(() => {
     if (!open) return;
+    setFailed(false);
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
@@ -33,8 +39,8 @@ export function KycPreviewButton({
     };
   }, [open]);
 
-  const image = isImage(url, fileName);
-  const pdf = isPdf(url, fileName);
+  const image = isImage(fileName);
+  const pdf = isPdf(fileName);
 
   return (
     <>
@@ -70,36 +76,44 @@ export function KycPreviewButton({
               </button>
             </div>
             <div className="kyc-modal__body">
-              {image ? (
+              {failed ? (
+                <div className="kyc-modal__fallback">
+                  <p className="muted">Could not load preview.</p>
+                  <a className="btn btn-primary" href={openUrl} target="_blank" rel="noreferrer">
+                    Open file
+                  </a>
+                  {fallbackUrl ? (
+                    <a className="btn btn-soft" href={fallbackUrl} target="_blank" rel="noreferrer">
+                      Direct link
+                    </a>
+                  ) : null}
+                </div>
+              ) : image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={url} alt={fileName} className="kyc-modal__img" />
+                <img
+                  src={previewUrl}
+                  alt={fileName}
+                  className="kyc-modal__img"
+                  referrerPolicy="no-referrer"
+                  onError={() => setFailed(true)}
+                />
               ) : pdf ? (
                 <iframe
-                  src={url}
+                  src={previewUrl}
                   title={fileName}
                   className="kyc-modal__frame"
                 />
               ) : (
                 <div className="kyc-modal__fallback">
                   <p className="muted">Preview not available for this file type.</p>
-                  <a
-                    className="btn btn-primary"
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+                  <a className="btn btn-primary" href={openUrl} target="_blank" rel="noreferrer">
                     Open file
                   </a>
                 </div>
               )}
             </div>
             <div className="modal-card__actions">
-              <a
-                className="btn btn-soft"
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-              >
+              <a className="btn btn-soft" href={openUrl} target="_blank" rel="noreferrer">
                 Open in new tab
               </a>
               <button

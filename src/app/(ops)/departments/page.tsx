@@ -74,47 +74,58 @@ export default async function DepartmentsPage() {
                   </td>
                 </tr>
               ) : (
-                rows.map((d) => (
-                  <tr key={d.id}>
-                    <td colSpan={6} style={{ padding: "0.65rem 1rem" }}>
-                      <form
-                        action={updateDepartment}
-                        className="row-actions"
-                        style={{ alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}
-                      >
-                        <input type="hidden" name="id" value={d.id} />
+                rows.map((d) => {
+                  const formId = `dept-${d.id}`;
+                  return (
+                    <tr key={d.id}>
+                      <td>
                         <input
+                          form={formId}
                           name="name"
                           defaultValue={d.name}
                           required
-                          style={{ minWidth: 160 }}
                           aria-label="Name"
+                          className="table-input"
                         />
-                        <span className="muted">{d.tenant.slug}</span>
-                        <span className="muted">{d._count.tickets} tickets</span>
+                      </td>
+                      <td>{d.tenant.slug}</td>
+                      <td>{d._count.tickets}</td>
+                      <td>
                         <input
+                          form={formId}
                           name="sortOrder"
                           type="number"
                           defaultValue={d.sortOrder}
-                          style={{ width: 72, minWidth: 72 }}
                           aria-label="Sort"
+                          className="table-input table-input--sm"
                         />
-                        <select
-                          name="isActive"
-                          defaultValue={d.isActive ? "true" : "false"}
-                          aria-label="Active"
-                        >
-                          <option value="true">Active</option>
-                          <option value="false">Inactive</option>
-                        </select>
-                        <StatusBadge status={d.isActive ? "ACTIVE" : "INACTIVE"} />
-                        <button className="btn btn-soft btn-sm" type="submit">
-                          Save
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td>
+                        <div className="row-actions">
+                          <select
+                            form={formId}
+                            name="isActive"
+                            defaultValue={d.isActive ? "true" : "false"}
+                            aria-label="Active"
+                            className="table-input"
+                          >
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                          </select>
+                          <StatusBadge status={d.isActive ? "ACTIVE" : "INACTIVE"} />
+                        </div>
+                      </td>
+                      <td>
+                        <form id={formId} action={updateDepartment}>
+                          <input type="hidden" name="id" value={d.id} />
+                          <button className="btn btn-soft btn-sm" type="submit">
+                            Save
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
