@@ -1,20 +1,16 @@
-import { DM_Sans, Fraunces } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
 
-const dmSans = DM_Sans({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
-});
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-display",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
   title: "Apex Admin CRM",
-  description: "Multi-tenant ClientZone operations dashboard",
+  description: "ClientZone operations dashboard",
 };
 
 export default function RootLayout({
@@ -24,7 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${dmSans.variable} ${fraunces.variable} antialiased`} style={{ fontFamily: "var(--font-sans), system-ui, sans-serif" }}>
+      <body
+        className={`${jakarta.variable} antialiased`}
+        style={{ fontFamily: "var(--font-sans), 'Segoe UI', sans-serif" }}
+      >
         {children}
       </body>
     </html>

@@ -10,6 +10,8 @@ export function ProfileMenu({ user }: { user: SessionUser }) {
   const initials =
     `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() ||
     user.email.slice(0, 2).toUpperCase();
+  const displayName =
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -30,13 +32,15 @@ export function ProfileMenu({ user }: { user: SessionUser }) {
         title="Account"
       >
         <span className="profile-avatar">{initials}</span>
+        <span className="profile-trigger__meta">
+          <strong className="cap">{displayName}</strong>
+          <span className="cap">{user.role}</span>
+        </span>
       </button>
       {open ? (
         <div className="profile-dropdown" role="menu">
           <div className="profile-dropdown__id">
-            <strong className="cap">
-              {user.firstName} {user.lastName}
-            </strong>
+            <strong className="cap">{displayName}</strong>
             <span>{user.email}</span>
             <span className="cap">
               {user.role} · {user.homeTenantSlug}
@@ -44,7 +48,7 @@ export function ProfileMenu({ user }: { user: SessionUser }) {
           </div>
           <form action={logoutAction}>
             <button className="profile-dropdown__logout" type="submit" role="menuitem">
-              Log Out
+              Log out
             </button>
           </form>
         </div>

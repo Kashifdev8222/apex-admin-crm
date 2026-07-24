@@ -8,7 +8,6 @@ import Link from "next/link";
 export default async function DashboardPage() {
   const user = await requireUser();
 
-  // Fewer round-trips: one recent list + compact counts in parallel
   const [counts, recentTx] = await Promise.all([
     prisma.$transaction([
       prisma.tenant.count(),
@@ -51,13 +50,18 @@ export default async function DashboardPage() {
     pendingKyc,
   ] = counts;
 
+  const firstName = user.firstName || "there";
+
   return (
     <AppShell user={user} title="Dashboard">
+      <div className="page-intro">
+        <p>
+          Welcome back, <strong className="cap">{firstName}</strong>. Here’s a
+          quick view of your workspace ({user.homeTenantSlug}).
+        </p>
+      </div>
+
       <div className="stats">
-        <div className="stat">
-          <div className="label">Tenants</div>
-          <div className="value">{tenants}</div>
-        </div>
         <div className="stat">
           <div className="label">Clients</div>
           <div className="value">{clients}</div>
@@ -66,39 +70,39 @@ export default async function DashboardPage() {
           <div className="label">Active Accounts</div>
           <div className="value">{accounts}</div>
         </div>
-        <div className="stat">
+        <div className="stat tone-info">
           <div className="label">Open Tickets</div>
           <div className="value">{openTickets}</div>
+        </div>
+        <div className="stat">
+          <div className="label">Tenants</div>
+          <div className="value">{tenants}</div>
         </div>
       </div>
 
       <div className="stats">
-        <div className="stat">
+        <div className="stat tone-warn">
           <div className="label">Pending Deposits</div>
           <div className="value">{pendingDeposits}</div>
         </div>
-        <div className="stat">
+        <div className="stat tone-warn">
           <div className="label">Pending Withdrawals</div>
           <div className="value">{pendingWithdraws}</div>
         </div>
-        <div className="stat">
+        <div className="stat tone-info">
           <div className="label">KYC To Review</div>
           <div className="value">{pendingKyc}</div>
         </div>
-        <div className="stat">
-          <div className="label">Staff Home</div>
-          <div className="value" style={{ fontSize: "1.05rem" }}>
-            {user.homeTenantSlug}
-          </div>
+        <div className="stat tone-ok">
+          <div className="label">Your Tenant</div>
+          <div className="value sm">{user.homeTenantSlug}</div>
         </div>
       </div>
 
       <div className="panel">
         <div className="panel-head">
           <h2>Recent Transactions</h2>
-          <Link href="/deposits" className="muted">
-            Manage Deposits →
-          </Link>
+          <Link href="/deposits">View deposits →</Link>
         </div>
         <div className="table-wrap">
           <table className="data">
@@ -116,7 +120,7 @@ export default async function DashboardPage() {
               {recentTx.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="muted">
-                    No Transactions Yet.
+                    No transactions yet.
                   </td>
                 </tr>
               ) : (

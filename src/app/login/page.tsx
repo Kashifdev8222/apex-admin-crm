@@ -44,15 +44,13 @@ export default function LoginPage() {
         <div className="login-brand">
           <div className="brand-mark">A</div>
           <div>
-            <h1 style={{ fontFamily: "var(--font-display), Georgia, serif" }}>
-              Apex Admin
-            </h1>
-            <div className="muted" style={{ fontSize: "0.8rem" }}>
-              Multi-tenant ClientZone CRM
+            <h1>Apex Admin</h1>
+            <div className="muted" style={{ fontSize: "0.78rem", marginTop: 2 }}>
+              Staff sign-in
             </div>
           </div>
         </div>
-        <p>Sign in with your staff account to manage deposits, KYC, tickets, and more.</p>
+        <p>Sign in to manage clients, deposits, withdrawals, KYC, and support.</p>
         {error ? (
           <div className={`error${hiding ? " hiding" : ""}`} role="alert">
             {error}
@@ -74,7 +72,7 @@ export default function LoginPage() {
           }}
         >
           <div className="field">
-            <label htmlFor="email">Email Address</label>
+            <label htmlFor="email">Email</label>
             <input
               id="email"
               name="email"
@@ -99,9 +97,9 @@ export default function LoginPage() {
             className="btn btn-primary"
             type="submit"
             disabled={pending || booting}
-            style={{ width: "100%", padding: "0.8rem" }}
+            style={{ width: "100%", padding: "0.72rem", marginTop: "0.25rem" }}
           >
-            {pending || booting ? "Signing In…" : "Sign In"}
+            {pending || booting ? "Signing in…" : "Sign in"}
           </button>
         </form>
       </div>
