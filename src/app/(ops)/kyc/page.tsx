@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
+import { KycPreviewButton } from "@/components/KycPreviewButton";
 import { prisma } from "@/lib/prisma";
 import { capitalize, fmtDate } from "@/lib/format";
 import { deleteKycDocument, reviewKyc } from "@/app/actions";
@@ -67,9 +68,7 @@ export default async function KycPage({
                   <td>{capitalize(d.documentType)}</td>
                   <td>
                     {d.publicUrl ? (
-                      <a href={d.publicUrl} target="_blank" rel="noreferrer">
-                        {d.fileName}
-                      </a>
+                      <KycPreviewButton url={d.publicUrl} fileName={d.fileName} />
                     ) : (
                       d.fileName
                     )}

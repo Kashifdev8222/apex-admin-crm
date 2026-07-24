@@ -34,7 +34,8 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction() {
   const jar = await cookies();
   jar.delete(SESSION_COOKIE);
-  redirect("/login");
+  // Client does hard redirect — server redirect() is slow on free hosts
+  return { ok: true as const };
 }
 
 export async function updateDepositStatus(formData: FormData) {

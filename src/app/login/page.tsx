@@ -1,19 +1,12 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { loginAction } from "@/app/actions";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [hiding, setHiding] = useState(false);
   const [pending, start] = useTransition();
-  const [booting, setBooting] = useState(false);
-
-  useEffect(() => {
-    router.prefetch("/dashboard");
-  }, [router]);
 
   useEffect(() => {
     if (!error) return;
@@ -31,77 +24,80 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
-      {(pending || booting) && (
+      {pending && (
         <div className="boot-overlay" aria-live="polite">
           <div className="boot-card">
             <div className="boot-spinner" />
-            <strong>{booting ? "Opening dashboard…" : "Signing in…"}</strong>
-            <span>Please wait a moment</span>
+            <strong>Signing in…</strong>
+            <span>One moment</span>
           </div>
         </div>
       )}
-      <div className="login-card">
-        <div className="login-brand">
-          <div className="brand-mark">A</div>
-          <div>
-            <h1>Apex Admin</h1>
-            <div className="muted" style={{ fontSize: "0.78rem", marginTop: 2 }}>
-              Staff sign-in
+      <div className="login-shell">
+        <div className="login-card">
+          <div className="login-brand">
+            <div className="brand-mark">A</div>
+            <div>
+              <h1>Apex Admin</h1>
+              <div className="login-sub">Operations CRM · Staff access</div>
             </div>
           </div>
-        </div>
-        <p>Sign in to manage clients, deposits, withdrawals, KYC, and support.</p>
-        {error ? (
-          <div className={`error${hiding ? " hiding" : ""}`} role="alert">
-            {error}
-          </div>
-        ) : null}
-        <form
-          action={(fd) => {
-            setError(null);
-            start(async () => {
-              const res = await loginAction(fd);
-              if (!res || !res.ok) {
-                setError(res && "error" in res ? res.error : "Login failed");
-                return;
-              }
-              setBooting(true);
-              router.replace("/dashboard");
-              router.refresh();
-            });
-          }}
-        >
-          <div className="field">
-            <label htmlFor="email">Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              placeholder="you@company.com"
-              autoComplete="username"
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              placeholder="Enter your password"
-              autoComplete="current-password"
-            />
-          </div>
-          <button
-            className="btn btn-primary"
-            type="submit"
-            disabled={pending || booting}
-            style={{ width: "100%", padding: "0.72rem", marginTop: "0.25rem" }}
+          <p className="login-lead">
+            Sign in to manage clients, deposits, KYC, tickets, and more.
+          </p>
+          {error ? (
+            <div className={`error${hiding ? " hiding" : ""}`} role="alert">
+              {error}
+            </div>
+          ) : null}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              setError(null);
+              start(async () => {
+                const res = await loginAction(fd);
+                if (!res || !res.ok) {
+                  setError(res && "error" in res ? res.error : "Login failed");
+                  return;
+                }
+                // Hard navigate is faster than soft RSC dashboard load
+                window.location.assign("/dashboard");
+              });
+            }}
           >
-            {pending || booting ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
+            <div className="field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                placeholder="you@company.com"
+                autoComplete="username"
+                autoFocus
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                placeholder="Enter your password"
+                autoComplete="current-password"
+              />
+            </div>
+            <button
+              className="btn btn-primary btn-login"
+              type="submit"
+              disabled={pending}
+            >
+              {pending ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

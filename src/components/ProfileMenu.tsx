@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { logoutAction } from "@/app/actions";
 import type { SessionUser } from "@/lib/auth";
 
 export function ProfileMenu({ user }: { user: SessionUser }) {
   const [open, setOpen] = useState(false);
+  const [pending, start] = useTransition();
   const ref = useRef<HTMLDivElement>(null);
   const initials =
     `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() ||
@@ -20,6 +21,18 @@ export function ProfileMenu({ user }: { user: SessionUser }) {
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
+
+  function onLogout() {
+    if (pending) return;
+    start(async () => {
+      try {
+        await logoutAction();
+      } catch {
+        /* cookie may still be cleared */
+      }
+      window.location.assign("/login");
+    });
+  }
 
   return (
     <div className="profile-menu" ref={ref}>
@@ -46,11 +59,16 @@ export function ProfileMenu({ user }: { user: SessionUser }) {
               {user.role} · {user.homeTenantSlug}
             </span>
           </div>
-          <form action={logoutAction}>
-            <button className="profile-dropdown__logout" type="submit" role="menuitem">
-              Log out
-            </button>
-          </form>
+          <button
+            className="profile-dropdown__logout"
+            type="button"
+            role="menuitem"
+            disabled={pending}
+            onClick={onLogout}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            {pending ? "Signing out…" : "Log out"}
+          </button>
         </div>
       ) : null}
     </div>
