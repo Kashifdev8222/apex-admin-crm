@@ -91,6 +91,36 @@ const links = [
     ),
   },
   {
+    href: "/departments",
+    label: "Departments",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 7h18M3 12h18M3 17h18" />
+      </svg>
+    ),
+  },
+  {
+    href: "/staff",
+    label: "Staff",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="3" />
+        <path d="M22 11v6M19 14h6" />
+      </svg>
+    ),
+  },
+  {
+    href: "/payments",
+    label: "Payments",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2" />
+        <path d="M2 10h20" />
+      </svg>
+    ),
+  },
+  {
     href: "/tenants",
     label: "Tenants",
     icon: (

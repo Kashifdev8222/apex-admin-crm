@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import {
   SESSION_COOKIE,
   authenticateStaff,
@@ -93,6 +93,7 @@ export async function updateDepositStatus(formData: FormData) {
 
   revalidatePath("/deposits");
   revalidatePath("/dashboard");
+  revalidateTag("dashboard");
 }
 
 export async function updateWithdrawStatus(formData: FormData) {
@@ -154,6 +155,7 @@ export async function updateWithdrawStatus(formData: FormData) {
 
   revalidatePath("/withdrawals");
   revalidatePath("/dashboard");
+  revalidateTag("dashboard");
 }
 
 export async function reviewKyc(formData: FormData) {
@@ -176,6 +178,7 @@ export async function reviewKyc(formData: FormData) {
   });
 
   revalidatePath("/kyc");
+  revalidateTag("dashboard");
 }
 
 export async function updateTicketStatus(formData: FormData) {
@@ -235,6 +238,7 @@ export async function deleteTransaction(formData: FormData) {
   revalidatePath("/deposits");
   revalidatePath("/withdrawals");
   revalidatePath("/dashboard");
+  revalidateTag("dashboard");
   revalidatePath(`/clients/${tx.clientId}`);
 }
 
@@ -301,4 +305,175 @@ export async function deleteClient(formData: FormData) {
   revalidatePath("/dashboard");
   redirect("/clients");
 }
+
+/* ——— Departments ——— */
+export async function createDepartment(formData: FormData) {
+  const session = await requireSession();
+  const name = String(formData.get("name") || "").trim();
+  const tenantId = String(formData.get("tenantId") || session.homeTenantId);
+  if (!name) return;
+  const sortOrder = Number(formData.get("sortOrder") || 0) || 0;
+  await prisma.ticketDepartment.create({
+    data: { tenantId, name, sortOrder, isActive: true },
+  });
+  revalidatePath("/departments");
+}
+
+export async function updateDepartment(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  const name = String(formData.get("name") || "").trim();
+  const isActive = String(formData.get("isActive") || "") === "true";
+  const sortOrder = Number(formData.get("sortOrder") || 0) || 0;
+  if (!id || !name) return;
+  await prisma.ticketDepartment.update({
+    where: { id },
+    data: { name, isActive, sortOrder },
+  });
+  revalidatePath("/departments");
+  revalidatePath("/tickets");
+}
+
+/* ——— Staff ——— */
+export async function createStaffUser(formData: FormData) {
+  const session = await requireSession();
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const password = String(formData.get("password") || "");
+  const firstName = String(formData.get("firstName") || "").trim();
+  const lastName = String(formData.get("lastName") || "").trim();
+  const role = String(formData.get("role") || "admin").trim() || "admin";
+  const tenantId = String(formData.get("tenantId") || session.homeTenantId);
+  if (!email || !password || !firstName || !lastName) return;
+
+  const bcrypt = (await import("bcryptjs")).default;
+  const passwordHash = await bcrypt.hash(password, 8);
+  await prisma.staffUser.create({
+    data: { tenantId, email, passwordHash, firstName, lastName, role, isActive: true },
+  });
+  revalidatePath("/staff");
+}
+
+export async function updateStaffUser(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  const firstName = String(formData.get("firstName") || "").trim();
+  const lastName = String(formData.get("lastName") || "").trim();
+  const role = String(formData.get("role") || "admin").trim() || "admin";
+  const isActive = String(formData.get("isActive") || "") === "true";
+  const password = String(formData.get("password") || "");
+  if (!id || !firstName || !lastName) return;
+
+  const data: {
+    firstName: string;
+    lastName: string;
+    role: string;
+    isActive: boolean;
+    passwordHash?: string;
+  } = { firstName, lastName, role, isActive };
+
+  if (password.length >= 6) {
+    const bcrypt = (await import("bcryptjs")).default;
+    data.passwordHash = await bcrypt.hash(password, 8);
+  }
+
+  await prisma.staffUser.update({ where: { id }, data });
+  revalidatePath("/staff");
+}
+
+/* ——— Payment methods ——— */
+export async function updatePaymentMethod(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  const name = String(formData.get("name") || "").trim();
+  const isEnabled = String(formData.get("isEnabled") || "") === "true";
+  const sortOrder = Number(formData.get("sortOrder") || 0) || 0;
+  if (!id || !name) return;
+  await prisma.paymentMethod.update({
+    where: { id },
+    data: { name, isEnabled, sortOrder },
+  });
+  revalidatePath("/payments");
+}
+
+export async function createPaymentMethod(formData: FormData) {
+  const session = await requireSession();
+  const type = String(formData.get("type") || "").trim();
+  const name = String(formData.get("name") || "").trim();
+  const tenantId = String(formData.get("tenantId") || session.homeTenantId);
+  if (!type || !name) return;
+  await prisma.paymentMethod.create({
+    data: {
+      tenantId,
+      type,
+      name,
+      isEnabled: true,
+      sortOrder: Number(formData.get("sortOrder") || 0) || 0,
+      config: {},
+    },
+  });
+  revalidatePath("/payments");
+}
+
+/* ——— Ticket assignment ——— */
+export async function updateTicketMeta(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  const status = String(formData.get("status") || "").trim();
+  const departmentId = String(formData.get("departmentId") || "").trim();
+  const assignedStaffId = String(formData.get("assignedStaffId") || "").trim();
+  if (!id) return;
+  await prisma.ticket.update({
+    where: { id },
+    data: {
+      ...(status ? { status } : {}),
+      departmentId: departmentId || null,
+      assignedStaffId: assignedStaffId || null,
+    },
+  });
+  revalidatePath(`/tickets/${id}`);
+  revalidatePath("/tickets");
+}
+
+/* ——— Meeting assignment ——— */
+export async function updateMeetingMeta(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  const status = String(formData.get("status") || "").trim();
+  const title = String(formData.get("title") || "").trim();
+  const assignedStaffId = String(formData.get("assignedStaffId") || "").trim();
+  const dateRaw = String(formData.get("date") || "").trim();
+  if (!id) return;
+  await prisma.meeting.update({
+    where: { id },
+    data: {
+      ...(status ? { status } : {}),
+      ...(title ? { title } : {}),
+      assignedStaffId: assignedStaffId || null,
+      ...(dateRaw ? { date: new Date(dateRaw) } : {}),
+    },
+  });
+  revalidatePath("/meetings");
+}
+
+/* ——— Tenant settings ——— */
+export async function updateTenant(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  const name = String(formData.get("name") || "").trim();
+  const defaultMtGroup = String(formData.get("defaultMtGroup") || "").trim();
+  const defaultLeverage = Number(formData.get("defaultLeverage") || 100) || 100;
+  const isActive = String(formData.get("isActive") || "") === "true";
+  if (!id || !name) return;
+  await prisma.tenant.update({
+    where: { id },
+    data: {
+      name,
+      isActive,
+      defaultLeverage,
+      ...(defaultMtGroup ? { defaultMtGroup } : {}),
+    },
+  });
+  revalidatePath("/tenants");
+}
+
 
