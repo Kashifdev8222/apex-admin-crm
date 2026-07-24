@@ -1,4 +1,5 @@
 import { StatusBadge } from "@/components/StatusBadge";
+import { EditRowModal } from "@/components/EditRowModal";
 import { prisma } from "@/lib/prisma";
 import { createPaymentMethod, updatePaymentMethod } from "@/app/actions";
 
@@ -64,58 +65,63 @@ export default async function PaymentsPage() {
                   </td>
                 </tr>
               ) : (
-                rows.map((m) => {
-                  const formId = `pm-${m.id}`;
-                  return (
-                    <tr key={m.id}>
-                      <td>
-                        <input
-                          form={formId}
-                          name="name"
-                          defaultValue={m.name}
-                          required
-                          aria-label="Name"
-                          className="table-input"
+                rows.map((m) => (
+                  <tr key={m.id}>
+                    <td>{m.name}</td>
+                    <td>{m.type}</td>
+                    <td>{m.tenant.slug}</td>
+                    <td>{m.sortOrder}</td>
+                    <td>
+                      <StatusBadge status={m.isEnabled ? "ACTIVE" : "INACTIVE"} />
+                    </td>
+                    <td>
+                      <div className="row-actions">
+                        <EditRowModal
+                          title={`Edit · ${m.name}`}
+                          action={updatePaymentMethod}
+                          hidden={{ id: m.id }}
+                          fields={[
+                            {
+                              name: "name",
+                              label: "Display name",
+                              defaultValue: m.name,
+                              required: true,
+                            },
+                            {
+                              name: "sortOrder",
+                              label: "Sort order",
+                              type: "number",
+                              defaultValue: m.sortOrder,
+                            },
+                            {
+                              name: "isEnabled",
+                              label: "Status",
+                              type: "select",
+                              defaultValue: m.isEnabled ? "true" : "false",
+                              options: [
+                                { value: "true", label: "Enabled" },
+                                { value: "false", label: "Disabled" },
+                              ],
+                            },
+                          ]}
                         />
-                      </td>
-                      <td>{m.type}</td>
-                      <td>{m.tenant.slug}</td>
-                      <td>
-                        <input
-                          form={formId}
-                          name="sortOrder"
-                          type="number"
-                          defaultValue={m.sortOrder}
-                          aria-label="Sort"
-                          className="table-input table-input--sm"
-                        />
-                      </td>
-                      <td>
-                        <div className="row-actions">
-                          <select
-                            form={formId}
-                            name="isEnabled"
-                            defaultValue={m.isEnabled ? "true" : "false"}
-                            aria-label="Enabled"
-                            className="table-input"
-                          >
-                            <option value="true">Enabled</option>
-                            <option value="false">Disabled</option>
-                          </select>
-                          <StatusBadge status={m.isEnabled ? "ACTIVE" : "INACTIVE"} />
-                        </div>
-                      </td>
-                      <td>
-                        <form id={formId} action={updatePaymentMethod}>
+                        <form action={updatePaymentMethod}>
                           <input type="hidden" name="id" value={m.id} />
+                          <input type="hidden" name="name" value={m.name} />
+                          <input type="hidden" name="sortOrder" value={String(m.sortOrder)} />
+                          <input
+                            type="hidden"
+                            name="isEnabled"
+                            value={m.isEnabled ? "false" : "true"}
+                          />
                           <button className="btn btn-soft btn-sm" type="submit">
-                            Save
+                            {m.isEnabled ? "Disable" : "Enable"}
                           </button>
                         </form>
-                      </td>
-                    </tr>
-                  );
-                })
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>

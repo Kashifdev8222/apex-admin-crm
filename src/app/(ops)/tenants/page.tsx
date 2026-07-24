@@ -1,4 +1,5 @@
 import { StatusBadge } from "@/components/StatusBadge";
+import { EditRowModal } from "@/components/EditRowModal";
 import { prisma } from "@/lib/prisma";
 import { fmtDate } from "@/lib/format";
 import { updateTenant } from "@/app/actions";
@@ -45,70 +46,79 @@ export default async function TenantsPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((t) => {
-                const formId = `tenant-${t.id}`;
-                return (
-                  <tr key={t.id}>
-                    <td>
-                      <input
-                        form={formId}
-                        name="name"
-                        defaultValue={t.name}
-                        required
-                        aria-label="Name"
-                        className="table-input"
+              {rows.map((t) => (
+                <tr key={t.id}>
+                  <td>{t.name}</td>
+                  <td>{t.slug}</td>
+                  <td>
+                    <code className="mono-cell">{t.defaultMtGroup}</code>
+                  </td>
+                  <td>{t.defaultLeverage}</td>
+                  <td>{t._count.clients}</td>
+                  <td>{t._count.accounts}</td>
+                  <td>
+                    <StatusBadge status={t.isActive ? "ACTIVE" : "INACTIVE"} />
+                  </td>
+                  <td>{fmtDate(t.createdAt)}</td>
+                  <td>
+                    <div className="row-actions">
+                      <EditRowModal
+                        title={`Edit · ${t.name}`}
+                        action={updateTenant}
+                        hidden={{ id: t.id }}
+                        fields={[
+                          {
+                            name: "name",
+                            label: "Name",
+                            defaultValue: t.name,
+                            required: true,
+                          },
+                          {
+                            name: "defaultMtGroup",
+                            label: "MT group",
+                            defaultValue: t.defaultMtGroup,
+                            required: true,
+                          },
+                          {
+                            name: "defaultLeverage",
+                            label: "Leverage",
+                            type: "number",
+                            defaultValue: t.defaultLeverage,
+                          },
+                          {
+                            name: "isActive",
+                            label: "Status",
+                            type: "select",
+                            defaultValue: t.isActive ? "true" : "false",
+                            options: [
+                              { value: "true", label: "Active" },
+                              { value: "false", label: "Inactive" },
+                            ],
+                          },
+                        ]}
                       />
-                    </td>
-                    <td>{t.slug}</td>
-                    <td>
-                      <input
-                        form={formId}
-                        name="defaultMtGroup"
-                        defaultValue={t.defaultMtGroup}
-                        aria-label="MT group"
-                        className="table-input"
-                        style={{ minWidth: 160 }}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        form={formId}
-                        name="defaultLeverage"
-                        type="number"
-                        defaultValue={t.defaultLeverage}
-                        aria-label="Leverage"
-                        className="table-input table-input--sm"
-                      />
-                    </td>
-                    <td>{t._count.clients}</td>
-                    <td>{t._count.accounts}</td>
-                    <td>
-                      <div className="row-actions">
-                        <select
-                          form={formId}
-                          name="isActive"
-                          defaultValue={t.isActive ? "true" : "false"}
-                          aria-label="Active"
-                          className="table-input"
-                        >
-                          <option value="true">Active</option>
-                          <option value="false">Inactive</option>
-                        </select>
-                        <StatusBadge status={t.isActive ? "ACTIVE" : "INACTIVE"} />
-                      </div>
-                    </td>
-                    <td>{fmtDate(t.createdAt)}</td>
-                    <td>
-                      <form id={formId} action={updateTenant}>
+                      <form action={updateTenant}>
                         <input type="hidden" name="id" value={t.id} />
+                        <input type="hidden" name="name" value={t.name} />
+                        <input type="hidden" name="defaultMtGroup" value={t.defaultMtGroup} />
+                        <input
+                          type="hidden"
+                          name="defaultLeverage"
+                          value={String(t.defaultLeverage)}
+                        />
+                        <input
+                          type="hidden"
+                          name="isActive"
+                          value={t.isActive ? "false" : "true"}
+                        />
                         <button className="btn btn-soft btn-sm" type="submit">
-                          Save
+                          {t.isActive ? "Disable" : "Enable"}
                         </button>
                       </form>
-                    </td>
-                  </tr>
-                );
-              })}
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

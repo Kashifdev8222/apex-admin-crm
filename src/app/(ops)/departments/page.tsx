@@ -1,4 +1,5 @@
 import { StatusBadge } from "@/components/StatusBadge";
+import { EditRowModal } from "@/components/EditRowModal";
 import { prisma } from "@/lib/prisma";
 import { createDepartment, updateDepartment } from "@/app/actions";
 
@@ -74,58 +75,63 @@ export default async function DepartmentsPage() {
                   </td>
                 </tr>
               ) : (
-                rows.map((d) => {
-                  const formId = `dept-${d.id}`;
-                  return (
-                    <tr key={d.id}>
-                      <td>
-                        <input
-                          form={formId}
-                          name="name"
-                          defaultValue={d.name}
-                          required
-                          aria-label="Name"
-                          className="table-input"
+                rows.map((d) => (
+                  <tr key={d.id}>
+                    <td>{d.name}</td>
+                    <td>{d.tenant.slug}</td>
+                    <td>{d._count.tickets}</td>
+                    <td>{d.sortOrder}</td>
+                    <td>
+                      <StatusBadge status={d.isActive ? "ACTIVE" : "INACTIVE"} />
+                    </td>
+                    <td>
+                      <div className="row-actions">
+                        <EditRowModal
+                          title={`Edit · ${d.name}`}
+                          action={updateDepartment}
+                          hidden={{ id: d.id }}
+                          fields={[
+                            {
+                              name: "name",
+                              label: "Name",
+                              defaultValue: d.name,
+                              required: true,
+                            },
+                            {
+                              name: "sortOrder",
+                              label: "Sort order",
+                              type: "number",
+                              defaultValue: d.sortOrder,
+                            },
+                            {
+                              name: "isActive",
+                              label: "Status",
+                              type: "select",
+                              defaultValue: d.isActive ? "true" : "false",
+                              options: [
+                                { value: "true", label: "Active" },
+                                { value: "false", label: "Inactive" },
+                              ],
+                            },
+                          ]}
                         />
-                      </td>
-                      <td>{d.tenant.slug}</td>
-                      <td>{d._count.tickets}</td>
-                      <td>
-                        <input
-                          form={formId}
-                          name="sortOrder"
-                          type="number"
-                          defaultValue={d.sortOrder}
-                          aria-label="Sort"
-                          className="table-input table-input--sm"
-                        />
-                      </td>
-                      <td>
-                        <div className="row-actions">
-                          <select
-                            form={formId}
-                            name="isActive"
-                            defaultValue={d.isActive ? "true" : "false"}
-                            aria-label="Active"
-                            className="table-input"
-                          >
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                          </select>
-                          <StatusBadge status={d.isActive ? "ACTIVE" : "INACTIVE"} />
-                        </div>
-                      </td>
-                      <td>
-                        <form id={formId} action={updateDepartment}>
+                        <form action={updateDepartment}>
                           <input type="hidden" name="id" value={d.id} />
+                          <input type="hidden" name="name" value={d.name} />
+                          <input type="hidden" name="sortOrder" value={String(d.sortOrder)} />
+                          <input
+                            type="hidden"
+                            name="isActive"
+                            value={d.isActive ? "false" : "true"}
+                          />
                           <button className="btn btn-soft btn-sm" type="submit">
-                            Save
+                            {d.isActive ? "Disable" : "Enable"}
                           </button>
                         </form>
-                      </td>
-                    </tr>
-                  );
-                })
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
