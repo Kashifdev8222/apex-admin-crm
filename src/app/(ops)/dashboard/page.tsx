@@ -75,6 +75,7 @@ async function RecentTxBlock() {
         <table className="data">
           <thead>
             <tr>
+              <th className="sr-col">#</th>
               <th>Type</th>
               <th>Status</th>
               <th>Amount</th>
@@ -86,13 +87,14 @@ async function RecentTxBlock() {
           <tbody>
             {recentTx.length === 0 ? (
               <tr>
-                <td colSpan={6} className="muted">
+                <td colSpan={7} className="muted">
                   No transactions yet.
                 </td>
               </tr>
             ) : (
-              recentTx.map((t) => (
+              recentTx.map((t, i) => (
                 <tr key={t.id}>
+                  <td className="sr-col">{i + 1}</td>
                   <td>{capitalize(t.type)}</td>
                   <td>
                     <StatusBadge status={t.status} />

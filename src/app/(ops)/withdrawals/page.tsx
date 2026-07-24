@@ -77,6 +77,7 @@ export default async function WithdrawalsPage({
           <table className="data">
             <thead>
               <tr>
+                <th className="sr-col">#</th>
                 <th>Client</th>
                 <th>Amount</th>
                 <th>Comment</th>
@@ -87,8 +88,9 @@ export default async function WithdrawalsPage({
               </tr>
             </thead>
             <tbody>
-              {rows.map((t) => (
+              {rows.map((t, i) => (
                 <tr key={t.id}>
+                  <td className="sr-col">{i + 1}</td>
                   <td>
                     <Link href={`/clients/${t.client.id}`} className="cap">
                       {t.client.firstName} {t.client.lastName}

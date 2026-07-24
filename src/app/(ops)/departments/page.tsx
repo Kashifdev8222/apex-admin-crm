@@ -59,6 +59,7 @@ export default async function DepartmentsPage() {
           <table className="data">
             <thead>
               <tr>
+                <th className="sr-col">#</th>
                 <th>Name</th>
                 <th>Tenant</th>
                 <th>Tickets</th>
@@ -70,13 +71,14 @@ export default async function DepartmentsPage() {
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="muted">
+                  <td colSpan={7} className="muted">
                     No departments yet. Create one above.
                   </td>
                 </tr>
               ) : (
-                rows.map((d) => (
+                rows.map((d, i) => (
                   <tr key={d.id}>
+                    <td className="sr-col">{i + 1}</td>
                     <td>{d.name}</td>
                     <td>{d.tenant.slug}</td>
                     <td>{d._count.tickets}</td>

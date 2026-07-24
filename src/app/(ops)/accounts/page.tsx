@@ -52,6 +52,7 @@ export default async function AccountsPage({
           <table className="data">
             <thead>
               <tr>
+                <th className="sr-col">#</th>
                 <th>TP / Login</th>
                 <th>Name</th>
                 <th>Client</th>
@@ -64,8 +65,9 @@ export default async function AccountsPage({
               </tr>
             </thead>
             <tbody>
-              {rows.map((a) => (
+              {rows.map((a, i) => (
                 <tr key={a.id}>
+                  <td className="sr-col">{i + 1}</td>
                   <td>{a.externalLogin || "—"}</td>
                   <td className="cap">{a.name}</td>
                   <td>

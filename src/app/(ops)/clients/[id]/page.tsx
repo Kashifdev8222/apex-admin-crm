@@ -80,6 +80,7 @@ export default async function ClientDetailPage({
             <table className="data">
               <thead>
                 <tr>
+                  <th className="sr-col">#</th>
                   <th>Name</th>
                   <th>TP</th>
                   <th>Balance</th>
@@ -87,8 +88,9 @@ export default async function ClientDetailPage({
                 </tr>
               </thead>
               <tbody>
-                {client.accounts.map((a) => (
+                {client.accounts.map((a, i) => (
                   <tr key={a.id}>
+                    <td className="sr-col">{i + 1}</td>
                     <td className="cap">{a.name}</td>
                     <td>{a.externalLogin || "—"}</td>
                     <td>{money(Number(a.balance), a.currency)}</td>
@@ -107,19 +109,21 @@ export default async function ClientDetailPage({
         </div>
         <div className="table-wrap">
           <table className="data">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Amount</th>
-                <th>Method</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {client.transactions.map((t) => (
-                <tr key={t.id}>
-                  <td>{capitalize(t.type)}</td>
+              <thead>
+                <tr>
+                  <th className="sr-col">#</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Amount</th>
+                  <th>Method</th>
+                  <th>Created</th>
+                </tr>
+              </thead>
+              <tbody>
+                {client.transactions.map((t, i) => (
+                  <tr key={t.id}>
+                    <td className="sr-col">{i + 1}</td>
+                    <td>{capitalize(t.type)}</td>
                   <td>
                     <StatusBadge status={t.status} />
                   </td>

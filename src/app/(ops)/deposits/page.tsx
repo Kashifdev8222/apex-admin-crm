@@ -78,6 +78,7 @@ export default async function DepositsPage({
           <table className="data">
             <thead>
               <tr>
+                <th className="sr-col">#</th>
                 <th>Client</th>
                 <th>Tenant</th>
                 <th>Amount</th>
@@ -89,8 +90,9 @@ export default async function DepositsPage({
               </tr>
             </thead>
             <tbody>
-              {rows.map((t) => (
+              {rows.map((t, i) => (
                 <tr key={t.id}>
+                  <td className="sr-col">{i + 1}</td>
                   <td>
                     <Link href={`/clients/${t.client.id}`} className="cap">
                       {t.client.firstName} {t.client.lastName}

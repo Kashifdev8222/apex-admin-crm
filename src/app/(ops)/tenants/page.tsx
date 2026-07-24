@@ -34,6 +34,7 @@ export default async function TenantsPage() {
           <table className="data">
             <thead>
               <tr>
+                <th className="sr-col">#</th>
                 <th>Name</th>
                 <th>Slug</th>
                 <th>MT Group</th>
@@ -46,8 +47,9 @@ export default async function TenantsPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((t) => (
+              {rows.map((t, i) => (
                 <tr key={t.id}>
+                  <td className="sr-col">{i + 1}</td>
                   <td>{t.name}</td>
                   <td>{t.slug}</td>
                   <td>

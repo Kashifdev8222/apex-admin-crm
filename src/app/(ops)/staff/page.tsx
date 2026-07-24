@@ -63,6 +63,7 @@ export default async function StaffPage() {
           <table className="data">
             <thead>
               <tr>
+                <th className="sr-col">#</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Tenant</th>
@@ -73,8 +74,9 @@ export default async function StaffPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((s) => (
+              {rows.map((s, i) => (
                 <tr key={s.id}>
+                  <td className="sr-col">{i + 1}</td>
                   <td className="cap">
                     {s.firstName} {s.lastName}
                   </td>

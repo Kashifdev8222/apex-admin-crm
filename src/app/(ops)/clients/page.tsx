@@ -74,6 +74,7 @@ export default async function ClientsPage({
           <table className="data">
             <thead>
               <tr>
+                <th className="sr-col">#</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Tenant</th>
@@ -84,11 +85,12 @@ export default async function ClientsPage({
               </tr>
             </thead>
             <tbody>
-              {rows.map((c) => {
+              {rows.map((c, i) => {
                 const bal = c.accounts.reduce((s, a) => s + Number(a.balance), 0);
                 const cur = c.accounts[0]?.currency || "USD";
                 return (
                   <tr key={c.id}>
+                    <td className="sr-col">{i + 1}</td>
                     <td>
                       <Link href={`/clients/${c.id}`} className="cap">
                         {c.firstName} {c.lastName}

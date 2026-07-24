@@ -46,6 +46,7 @@ export default async function KycPage({
           <table className="data">
             <thead>
               <tr>
+                <th className="sr-col">#</th>
                 <th>Client</th>
                 <th>Tenant</th>
                 <th>Type</th>
@@ -56,8 +57,9 @@ export default async function KycPage({
               </tr>
             </thead>
             <tbody>
-              {rows.map((d) => (
+              {rows.map((d, i) => (
                 <tr key={d.id}>
+                  <td className="sr-col">{i + 1}</td>
                   <td>
                     <Link href={`/clients/${d.client.id}`} className="cap">
                       {d.client.firstName} {d.client.lastName}

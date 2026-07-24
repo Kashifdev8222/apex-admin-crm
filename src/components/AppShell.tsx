@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
 import type { SessionUser } from "@/lib/auth";
 import { ProfileMenu } from "@/components/ProfileMenu";
 
-const links = [
+type NavItem = { href: string; label: string; icon: ReactNode };
+
+const overview: NavItem[] = [
   {
     href: "/dashboard",
     label: "Dashboard",
@@ -40,6 +42,9 @@ const links = [
       </svg>
     ),
   },
+];
+
+const money: NavItem[] = [
   {
     href: "/deposits",
     label: "Deposits",
@@ -60,6 +65,19 @@ const links = [
       </svg>
     ),
   },
+  {
+    href: "/payments",
+    label: "Payments",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2" />
+        <path d="M2 10h20" />
+      </svg>
+    ),
+  },
+];
+
+const support: NavItem[] = [
   {
     href: "/kyc",
     label: "KYC",
@@ -99,6 +117,9 @@ const links = [
       </svg>
     ),
   },
+];
+
+const system: NavItem[] = [
   {
     href: "/staff",
     label: "Staff",
@@ -107,16 +128,6 @@ const links = [
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
         <circle cx="9" cy="7" r="3" />
         <path d="M22 11v6M19 14h6" />
-      </svg>
-    ),
-  },
-  {
-    href: "/payments",
-    label: "Payments",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="5" width="20" height="14" rx="2" />
-        <path d="M2 10h20" />
       </svg>
     ),
   },
@@ -133,8 +144,10 @@ const links = [
   },
 ];
 
+const allLinks = [...overview, ...money, ...support, ...system];
+
 function titleFromPath(pathname: string) {
-  const hit = links.find(
+  const hit = allLinks.find(
     (l) =>
       pathname === l.href ||
       (l.href !== "/dashboard" && pathname.startsWith(`${l.href}/`)),
@@ -143,6 +156,47 @@ function titleFromPath(pathname: string) {
   if (pathname.startsWith("/clients/")) return "Client";
   if (pathname.startsWith("/tickets/")) return "Ticket";
   return "Operations";
+}
+
+function NavGroup({
+  label,
+  items,
+  pathname,
+  onGo,
+}: {
+  label: string;
+  items: NavItem[];
+  pathname: string;
+  onGo: (href: string) => void;
+}) {
+  return (
+    <div className="nav-group">
+      <div className="nav-group__label">{label}</div>
+      {items.map((l) => {
+        const active =
+          l.href === "/dashboard"
+            ? pathname === "/dashboard"
+            : pathname === l.href || pathname.startsWith(`${l.href}/`);
+        return (
+          <Link
+            key={l.href}
+            href={l.href}
+            prefetch
+            className={active ? "active" : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              onGo(l.href);
+            }}
+          >
+            <span className="nav-icon" aria-hidden>
+              {l.icon}
+            </span>
+            <span>{l.label}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
 }
 
 export function AppShell({
@@ -163,7 +217,7 @@ export function AppShell({
   }, [pathname]);
 
   useEffect(() => {
-    links.forEach((l) => router.prefetch(l.href));
+    allLinks.forEach((l) => router.prefetch(l.href));
   }, [router]);
 
   function go(href: string) {
@@ -188,30 +242,14 @@ export function AppShell({
           </div>
         </div>
         <nav className="nav">
-          {links.map((l) => {
-            const active =
-              l.href === "/dashboard"
-                ? pathname === "/dashboard"
-                : pathname === l.href || pathname.startsWith(`${l.href}/`);
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                prefetch
-                className={active ? "active" : undefined}
-                onClick={(e) => {
-                  e.preventDefault();
-                  go(l.href);
-                }}
-              >
-                <span className="nav-icon" aria-hidden>
-                  {l.icon}
-                </span>
-                <span>{l.label}</span>
-              </Link>
-            );
-          })}
+          <NavGroup label="Overview" items={overview} pathname={pathname} onGo={go} />
+          <NavGroup label="Finance" items={money} pathname={pathname} onGo={go} />
+          <NavGroup label="Support" items={support} pathname={pathname} onGo={go} />
+          <NavGroup label="System" items={system} pathname={pathname} onGo={go} />
         </nav>
+        <div className="sidebar-foot">
+          <span className="muted">{user.homeTenantSlug}</span>
+        </div>
       </aside>
 
       <div className="main">

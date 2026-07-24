@@ -33,6 +33,7 @@ export default async function MeetingsPage() {
           <table className="data">
             <thead>
               <tr>
+                <th className="sr-col">#</th>
                 <th>Title</th>
                 <th>Client</th>
                 <th>When</th>
@@ -42,8 +43,9 @@ export default async function MeetingsPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((m) => (
+              {rows.map((m, i) => (
                 <tr key={m.id}>
+                  <td className="sr-col">{i + 1}</td>
                   <td>
                     {m.title}
                     <div className="muted">{m.tenant.slug}</div>

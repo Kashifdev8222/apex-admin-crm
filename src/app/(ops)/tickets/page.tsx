@@ -48,6 +48,7 @@ export default async function TicketsPage({
           <table className="data">
             <thead>
               <tr>
+                <th className="sr-col">#</th>
                 <th>Title</th>
                 <th>Client</th>
                 <th>Tenant</th>
@@ -58,8 +59,9 @@ export default async function TicketsPage({
               </tr>
             </thead>
             <tbody>
-              {rows.map((t) => (
+              {rows.map((t, i) => (
                 <tr key={t.id}>
+                  <td className="sr-col">{i + 1}</td>
                   <td>
                     <Link href={`/tickets/${t.id}`}>{t.title}</Link>
                     <div className="muted">{t.department?.name || "—"}</div>

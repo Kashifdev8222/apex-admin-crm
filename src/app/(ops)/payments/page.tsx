@@ -49,6 +49,7 @@ export default async function PaymentsPage() {
           <table className="data">
             <thead>
               <tr>
+                <th className="sr-col">#</th>
                 <th>Name</th>
                 <th>Type</th>
                 <th>Tenant</th>
@@ -60,13 +61,14 @@ export default async function PaymentsPage() {
             <tbody>
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="muted">
+                  <td colSpan={7} className="muted">
                     No payment methods yet.
                   </td>
                 </tr>
               ) : (
-                rows.map((m) => (
+                rows.map((m, i) => (
                   <tr key={m.id}>
+                    <td className="sr-col">{i + 1}</td>
                     <td>{m.name}</td>
                     <td>{m.type}</td>
                     <td>{m.tenant.slug}</td>
