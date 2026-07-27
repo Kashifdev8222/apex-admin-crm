@@ -19,8 +19,6 @@ export default async function ActivityPage({
               { action: { contains: q, mode: "insensitive" } },
               { actorType: { contains: q, mode: "insensitive" } },
               { entityType: { contains: q, mode: "insensitive" } },
-              { entityId: { contains: q, mode: "insensitive" } },
-              { actorId: { contains: q, mode: "insensitive" } },
             ],
           }
         : {}),

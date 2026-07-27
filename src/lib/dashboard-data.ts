@@ -15,10 +15,37 @@ export type DashboardStats = {
   pendingWithdrawAmount: number;
 };
 
+function statNum(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "bigint") return Number(value);
+  if (typeof value === "string" && value.trim() !== "") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+function normalizeStats(row: Record<string, unknown> | undefined): DashboardStats {
+  const r = row ?? {};
+  return {
+    tenants: statNum(r.tenants),
+    clients: statNum(r.clients),
+    accounts: statNum(r.accounts),
+    openTickets: statNum(r.openTickets),
+    pendingDeposits: statNum(r.pendingDeposits),
+    pendingWithdraws: statNum(r.pendingWithdraws),
+    pendingKyc: statNum(r.pendingKyc),
+    aum: statNum(r.aum),
+    pendingDepositAmount: statNum(r.pendingDepositAmount),
+    pendingWithdrawAmount: statNum(r.pendingWithdrawAmount),
+  };
+}
+
 /** One DB round-trip for all dashboard counters (cached 45s). */
 export const getDashboardStats = unstable_cache(
   async (): Promise<DashboardStats> => {
-    const rows = await prisma.$queryRaw<DashboardStats[]>(Prisma.sql`
+    try {
+    const rows = await prisma.$queryRaw<Record<string, unknown>[]>(Prisma.sql`
       SELECT
         (SELECT COUNT(*)::int FROM tenants) AS tenants,
         (SELECT COUNT(*)::int FROM clients) AS clients,
@@ -36,22 +63,13 @@ export const getDashboardStats = unstable_cache(
         (SELECT COALESCE(SUM(amount), 0)::float FROM transactions
           WHERE type::text = 'WITHDRAW' AND status::text IN ('PENDING', 'PROCESSING')) AS "pendingWithdrawAmount"
     `);
-    return (
-      rows[0] ?? {
-        tenants: 0,
-        clients: 0,
-        accounts: 0,
-        openTickets: 0,
-        pendingDeposits: 0,
-        pendingWithdraws: 0,
-        pendingKyc: 0,
-        aum: 0,
-        pendingDepositAmount: 0,
-        pendingWithdrawAmount: 0,
-      }
-    );
+    return normalizeStats(rows[0]);
+    } catch (err) {
+      console.error("getDashboardStats failed:", err);
+      return normalizeStats(undefined);
+    }
   },
-  ["dashboard-stats-v2"],
+  ["dashboard-stats-v3"],
   { revalidate: 45, tags: ["dashboard"] },
 );
 
