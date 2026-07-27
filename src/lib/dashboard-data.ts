@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
@@ -15,6 +14,33 @@ export type DashboardStats = {
   pendingWithdrawAmount: number;
 };
 
+export type DashboardTx = {
+  id: string;
+  type: string;
+  status: string;
+  amount: number;
+  currency: string;
+  createdAt: string;
+  client: { email: string; firstName: string; lastName: string };
+  tenant: { slug: string };
+};
+
+export type PendingApprovalTx = {
+  id: string;
+  type: string;
+  amount: number;
+  currency: string;
+  createdAt: string;
+  client: { id: string; firstName: string; lastName: string };
+};
+
+export type PendingApprovalKyc = {
+  id: string;
+  documentType: string;
+  createdAt: string;
+  client: { id: string; firstName: string; lastName: string };
+};
+
 function statNum(value: unknown): number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "bigint") return Number(value);
@@ -22,7 +48,17 @@ function statNum(value: unknown): number {
     const n = Number(value);
     return Number.isFinite(n) ? n : 0;
   }
-  return 0;
+  // Prisma Decimal
+  if (value && typeof value === "object" && "toNumber" in value) {
+    try {
+      const n = (value as { toNumber: () => number }).toNumber();
+      return Number.isFinite(n) ? n : 0;
+    } catch {
+      return 0;
+    }
+  }
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
 }
 
 function normalizeStats(row: Record<string, unknown> | undefined): DashboardStats {
@@ -41,10 +77,11 @@ function normalizeStats(row: Record<string, unknown> | undefined): DashboardStat
   };
 }
 
-/** One DB round-trip for all dashboard counters (cached 45s). */
-export const getDashboardStats = unstable_cache(
-  async (): Promise<DashboardStats> => {
-    try {
+const emptyStats = (): DashboardStats => normalizeStats(undefined);
+
+/** Plain DB reads — no unstable_cache (avoids Decimal/Date serialization crashes on Render). */
+export async function getDashboardStats(): Promise<DashboardStats> {
+  try {
     const rows = await prisma.$queryRaw<Record<string, unknown>[]>(Prisma.sql`
       SELECT
         (SELECT COUNT(*)::int FROM tenants) AS tenants,
@@ -64,18 +101,15 @@ export const getDashboardStats = unstable_cache(
           WHERE type::text = 'WITHDRAW' AND status::text IN ('PENDING', 'PROCESSING')) AS "pendingWithdrawAmount"
     `);
     return normalizeStats(rows[0]);
-    } catch (err) {
-      console.error("getDashboardStats failed:", err);
-      return normalizeStats(undefined);
-    }
-  },
-  ["dashboard-stats-v3"],
-  { revalidate: 45, tags: ["dashboard"] },
-);
+  } catch (err) {
+    console.error("getDashboardStats failed:", err);
+    return emptyStats();
+  }
+}
 
-export const getRecentTransactions = unstable_cache(
-  async () => {
-    return prisma.transaction.findMany({
+export async function getRecentTransactions(): Promise<DashboardTx[]> {
+  try {
+    const rows = await prisma.transaction.findMany({
       orderBy: { createdAt: "desc" },
       take: 8,
       select: {
@@ -89,18 +123,34 @@ export const getRecentTransactions = unstable_cache(
         tenant: { select: { slug: true } },
       },
     });
-  },
-  ["dashboard-recent-tx-v1"],
-  { revalidate: 20, tags: ["dashboard"] },
-);
+    return rows.map((t) => ({
+      id: t.id,
+      type: String(t.type),
+      status: String(t.status),
+      amount: statNum(t.amount),
+      currency: t.currency || "USD",
+      createdAt: t.createdAt.toISOString(),
+      client: {
+        email: t.client.email,
+        firstName: t.client.firstName || "",
+        lastName: t.client.lastName || "",
+      },
+      tenant: { slug: t.tenant.slug },
+    }));
+  } catch (err) {
+    console.error("getRecentTransactions failed:", err);
+    return [];
+  }
+}
 
-export const getPendingApprovals = unstable_cache(
-  async () => {
+export async function getPendingApprovals(): Promise<{
+  txs: PendingApprovalTx[];
+  kyc: PendingApprovalKyc[];
+}> {
+  try {
     const [txs, kyc] = await Promise.all([
       prisma.transaction.findMany({
-        where: {
-          status: { in: ["PENDING", "PROCESSING"] },
-        },
+        where: { status: { in: ["PENDING", "PROCESSING"] } },
         orderBy: { createdAt: "desc" },
         take: 6,
         select: {
@@ -124,8 +174,32 @@ export const getPendingApprovals = unstable_cache(
         },
       }),
     ]);
-    return { txs, kyc };
-  },
-  ["dashboard-pending-v1"],
-  { revalidate: 20, tags: ["dashboard"] },
-);
+    return {
+      txs: txs.map((t) => ({
+        id: t.id,
+        type: String(t.type),
+        amount: statNum(t.amount),
+        currency: t.currency || "USD",
+        createdAt: t.createdAt.toISOString(),
+        client: {
+          id: t.client.id,
+          firstName: t.client.firstName || "",
+          lastName: t.client.lastName || "",
+        },
+      })),
+      kyc: kyc.map((d) => ({
+        id: d.id,
+        documentType: d.documentType || "Document",
+        createdAt: d.createdAt.toISOString(),
+        client: {
+          id: d.client.id,
+          firstName: d.client.firstName || "",
+          lastName: d.client.lastName || "",
+        },
+      })),
+    };
+  } catch (err) {
+    console.error("getPendingApprovals failed:", err);
+    return { txs: [], kyc: [] };
+  }
+}

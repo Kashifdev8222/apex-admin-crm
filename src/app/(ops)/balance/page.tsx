@@ -7,9 +7,10 @@ import { updateDepositStatus, updateWithdrawStatus } from "@/app/actions";
 import { getDashboardStats } from "@/lib/dashboard-data";
 
 function fmtCompact(n: number) {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`;
-  return money(n, "USD");
+  const v = Number.isFinite(n) ? n : 0;
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+  if (v >= 1_000) return `$${(v / 1_000).toFixed(1)}K`;
+  return money(v, "USD");
 }
 
 export default async function BalancePage() {
