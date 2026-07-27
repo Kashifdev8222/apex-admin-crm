@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { logoutAction } from "@/app/actions";
 import type { SessionUser } from "@/lib/auth";
@@ -45,20 +46,35 @@ export function ProfileMenu({ user }: { user: SessionUser }) {
         title="Account"
       >
         <span className="profile-avatar">{initials}</span>
-        <span className="profile-trigger__meta">
-          <strong className="cap">{displayName}</strong>
-          <span className="cap">{user.role}</span>
-        </span>
       </button>
       {open ? (
         <div className="profile-dropdown" role="menu">
           <div className="profile-dropdown__id">
-            <strong className="cap">{displayName}</strong>
-            <span>{user.email}</span>
-            <span className="cap">
-              {user.role} · {user.homeTenantSlug}
-            </span>
+            <div className="dd-avatar">{initials}</div>
+            <div>
+              <strong className="cap">{displayName}</strong>
+              <span>{user.email}</span>
+              <span className="cap">
+                {user.role} · {user.homeTenantSlug}
+              </span>
+            </div>
           </div>
+          <Link
+            href="/tenants"
+            className="profile-dropdown__link"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            Platform Settings
+          </Link>
+          <Link
+            href="/activity"
+            className="profile-dropdown__link"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            Audit Log
+          </Link>
           <button
             className="profile-dropdown__logout"
             type="button"
@@ -67,7 +83,7 @@ export function ProfileMenu({ user }: { user: SessionUser }) {
             onClick={onLogout}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            {pending ? "Signing out…" : "Log out"}
+            {pending ? "Signing out…" : "Sign Out"}
           </button>
         </div>
       ) : null}

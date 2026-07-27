@@ -30,9 +30,16 @@ export default async function AccountsPage({
 
   return (
     <>
+      <div className="page-head">
+        <div>
+          <h1>Trading Accounts</h1>
+          <div className="breadcrumb">Real and demo accounts across tenants</div>
+        </div>
+      </div>
+
       <form className="filters" method="get">
         <select name="tenant" defaultValue={tenant} aria-label="Tenant">
-          <option value="">All Tenants</option>
+          <option value="">All tenants</option>
           {tenants.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name} ({t.slug})
@@ -40,7 +47,7 @@ export default async function AccountsPage({
           ))}
         </select>
         <button className="btn btn-primary" type="submit">
-          Apply Filter
+          Apply filter
         </button>
       </form>
 

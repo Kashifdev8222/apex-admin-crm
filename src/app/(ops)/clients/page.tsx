@@ -46,15 +46,22 @@ export default async function ClientsPage({
 
   return (
     <>
+      <div className="page-head">
+        <div>
+          <h1>User Management</h1>
+          <div className="breadcrumb">Clients across all tenants</div>
+        </div>
+      </div>
+
       <form className="filters" method="get">
         <input
           name="q"
           defaultValue={q}
-          placeholder="Search Email, Name, Phone"
+          placeholder="Search email, name, phone"
           aria-label="Search"
         />
         <select name="tenant" defaultValue={tenant} aria-label="Tenant">
-          <option value="">All Tenants</option>
+          <option value="">All tenants</option>
           {tenants.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name} ({t.slug})
@@ -62,21 +69,20 @@ export default async function ClientsPage({
           ))}
         </select>
         <button className="btn btn-primary" type="submit">
-          Apply Filter
+          Apply filter
         </button>
       </form>
 
       <div className="panel">
         <div className="panel-head">
-          <h2>{rows.length} Clients</h2>
+          <h2>{rows.length} Users</h2>
         </div>
         <div className="table-wrap">
           <table className="data">
             <thead>
               <tr>
                 <th className="sr-col">#</th>
-                <th>Name</th>
-                <th>Email</th>
+                <th>User</th>
                 <th>Tenant</th>
                 <th>Status</th>
                 <th>Balance</th>
@@ -88,15 +94,23 @@ export default async function ClientsPage({
               {rows.map((c, i) => {
                 const bal = c.accounts.reduce((s, a) => s + Number(a.balance), 0);
                 const cur = c.accounts[0]?.currency || "USD";
+                const initials =
+                  `${c.firstName?.[0] || ""}${c.lastName?.[0] || ""}`.toUpperCase() ||
+                  c.email.slice(0, 2).toUpperCase();
                 return (
                   <tr key={c.id}>
                     <td className="sr-col">{i + 1}</td>
                     <td>
-                      <Link href={`/clients/${c.id}`} className="cap">
-                        {c.firstName} {c.lastName}
+                      <Link href={`/clients/${c.id}`} className="user-cell">
+                        <span className="user-avatar">{initials}</span>
+                        <span className="user-info">
+                          <span className="user-name cap">
+                            {c.firstName} {c.lastName}
+                          </span>
+                          <span className="user-sub">{c.email}</span>
+                        </span>
                       </Link>
                     </td>
-                    <td>{c.email}</td>
                     <td>{c.tenant.slug}</td>
                     <td>
                       <StatusBadge status={c.status} />
@@ -105,7 +119,7 @@ export default async function ClientsPage({
                     <td>{fmtDate(c.createdAt)}</td>
                     <td>
                       <div className="row-actions">
-                        <Link className="btn btn-soft btn-sm" href={`/clients/${c.id}`}>
+                        <Link className="btn btn-outline btn-sm" href={`/clients/${c.id}`}>
                           Open
                         </Link>
                         <ConfirmDeleteButton

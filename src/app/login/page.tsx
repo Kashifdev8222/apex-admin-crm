@@ -37,14 +37,14 @@ export default function LoginPage() {
       <div className="login-shell">
         <div className="login-card">
           <div className="login-brand">
-            <div className="brand-mark">A</div>
+            <div className="brand-mark" aria-hidden />
             <div>
-              <h1>Apex Admin</h1>
+              <h1>TradeScope Admin</h1>
               <div className="login-sub">Operations CRM · Staff access</div>
             </div>
           </div>
           <p className="login-lead">
-            Sign in to manage clients, deposits, KYC, tickets, and more.
+            Sign in to manage users, balances, KYC, tickets, and more.
           </p>
           {error ? (
             <div className={`error${hiding ? " hiding" : ""}`} role="alert">

@@ -10,6 +10,9 @@ export type DashboardStats = {
   pendingDeposits: number;
   pendingWithdraws: number;
   pendingKyc: number;
+  aum: number;
+  pendingDepositAmount: number;
+  pendingWithdrawAmount: number;
 };
 
 /** One DB round-trip for all dashboard counters (cached 45s). */
@@ -26,7 +29,12 @@ export const getDashboardStats = unstable_cache(
           WHERE type::text = 'DEPOSIT' AND status::text IN ('PENDING', 'PROCESSING')) AS "pendingDeposits",
         (SELECT COUNT(*)::int FROM transactions
           WHERE type::text = 'WITHDRAW' AND status::text IN ('PENDING', 'PROCESSING')) AS "pendingWithdraws",
-        (SELECT COUNT(*)::int FROM kyc_documents WHERE status = 'PENDING') AS "pendingKyc"
+        (SELECT COUNT(*)::int FROM kyc_documents WHERE status = 'PENDING') AS "pendingKyc",
+        (SELECT COALESCE(SUM(balance), 0)::float FROM trading_accounts WHERE is_active = true) AS aum,
+        (SELECT COALESCE(SUM(amount), 0)::float FROM transactions
+          WHERE type::text = 'DEPOSIT' AND status::text IN ('PENDING', 'PROCESSING')) AS "pendingDepositAmount",
+        (SELECT COALESCE(SUM(amount), 0)::float FROM transactions
+          WHERE type::text = 'WITHDRAW' AND status::text IN ('PENDING', 'PROCESSING')) AS "pendingWithdrawAmount"
     `);
     return (
       rows[0] ?? {
@@ -37,10 +45,13 @@ export const getDashboardStats = unstable_cache(
         pendingDeposits: 0,
         pendingWithdraws: 0,
         pendingKyc: 0,
+        aum: 0,
+        pendingDepositAmount: 0,
+        pendingWithdrawAmount: 0,
       }
     );
   },
-  ["dashboard-stats-v1"],
+  ["dashboard-stats-v2"],
   { revalidate: 45, tags: ["dashboard"] },
 );
 
@@ -62,5 +73,41 @@ export const getRecentTransactions = unstable_cache(
     });
   },
   ["dashboard-recent-tx-v1"],
+  { revalidate: 20, tags: ["dashboard"] },
+);
+
+export const getPendingApprovals = unstable_cache(
+  async () => {
+    const [txs, kyc] = await Promise.all([
+      prisma.transaction.findMany({
+        where: {
+          status: { in: ["PENDING", "PROCESSING"] },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        select: {
+          id: true,
+          type: true,
+          amount: true,
+          currency: true,
+          createdAt: true,
+          client: { select: { id: true, firstName: true, lastName: true } },
+        },
+      }),
+      prisma.kycDocument.findMany({
+        where: { status: "PENDING" },
+        orderBy: { createdAt: "desc" },
+        take: 4,
+        select: {
+          id: true,
+          documentType: true,
+          createdAt: true,
+          client: { select: { id: true, firstName: true, lastName: true } },
+        },
+      }),
+    ]);
+    return { txs, kyc };
+  },
+  ["dashboard-pending-v1"],
   { revalidate: 20, tags: ["dashboard"] },
 );

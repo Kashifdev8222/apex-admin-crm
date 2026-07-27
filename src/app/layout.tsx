@@ -1,16 +1,22 @@
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "Apex Admin CRM",
-  description: "ClientZone operations dashboard",
+  title: "TradeScope Admin",
+  description: "TradeScope AI operations dashboard",
 };
 
 export default function RootLayout({
@@ -21,8 +27,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${jakarta.variable} antialiased`}
-        style={{ fontFamily: "var(--font-sans), 'Segoe UI', sans-serif" }}
+        className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}
+        style={{ fontFamily: "var(--font-sans), Inter, system-ui, sans-serif" }}
       >
         {children}
       </body>

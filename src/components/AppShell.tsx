@@ -4,26 +4,27 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, type ReactNode } from "react";
 import type { SessionUser } from "@/lib/auth";
+import { logoutAction } from "@/app/actions";
 import { ProfileMenu } from "@/components/ProfileMenu";
 
 type NavItem = { href: string; label: string; icon: ReactNode };
 
-const overview: NavItem[] = [
+const dashboard: NavItem[] = [
   {
     href: "/dashboard",
     label: "Dashboard",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="9" rx="1.5" />
-        <rect x="14" y="3" width="7" height="5" rx="1.5" />
-        <rect x="14" y="12" width="7" height="9" rx="1.5" />
-        <rect x="3" y="16" width="7" height="5" rx="1.5" />
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3 3h8v8H3V3zm10 0h8v5h-8V3zM3 13h8v8H3v-8zm10 7h8v-8h-8v8z" />
       </svg>
     ),
   },
+];
+
+const management: NavItem[] = [
   {
     href: "/clients",
-    label: "Clients",
+    label: "User Management",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -33,8 +34,8 @@ const overview: NavItem[] = [
     ),
   },
   {
-    href: "/accounts",
-    label: "Accounts",
+    href: "/balance",
+    label: "Balance Control",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="5" width="20" height="14" rx="2" />
@@ -42,32 +43,28 @@ const overview: NavItem[] = [
       </svg>
     ),
   },
-];
-
-const money: NavItem[] = [
   {
-    href: "/deposits",
-    label: "Deposits",
+    href: "/transactions",
+    label: "Transactions",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 5v14" />
-        <path d="m19 12-7 7-7-7" />
+        <path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
       </svg>
     ),
   },
   {
-    href: "/withdrawals",
-    label: "Withdrawals",
+    href: "/accounts",
+    label: "Trading Accounts",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 19V5" />
-        <path d="m5 12 7-7 7 7" />
+        <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z" />
+        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
       </svg>
     ),
   },
   {
     href: "/payments",
-    label: "Payments",
+    label: "Payment Methods",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="5" width="20" height="14" rx="2" />
@@ -77,10 +74,10 @@ const money: NavItem[] = [
   },
 ];
 
-const support: NavItem[] = [
+const compliance: NavItem[] = [
   {
     href: "/kyc",
-    label: "KYC",
+    label: "KYC & Documents",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
@@ -91,10 +88,10 @@ const support: NavItem[] = [
   },
   {
     href: "/tickets",
-    label: "Tickets",
+    label: "Support Tickets",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 1 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 1 0 0-4V8Z" />
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
       </svg>
     ),
   },
@@ -108,21 +105,22 @@ const support: NavItem[] = [
       </svg>
     ),
   },
-  {
-    href: "/departments",
-    label: "Departments",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 7h18M3 12h18M3 17h18" />
-      </svg>
-    ),
-  },
 ];
 
 const system: NavItem[] = [
   {
+    href: "/tenants",
+    label: "Platform Settings",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+      </svg>
+    ),
+  },
+  {
     href: "/staff",
-    label: "Staff",
+    label: "Staff Users",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -132,30 +130,56 @@ const system: NavItem[] = [
     ),
   },
   {
-    href: "/tenants",
-    label: "Tenants",
+    href: "/departments",
+    label: "Departments",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 21h18" />
-        <path d="M5 21V7l7-4 7 4v14" />
-        <path d="M9 21v-6h6v6" />
+        <path d="M3 7h18M3 12h18M3 17h18" />
+      </svg>
+    ),
+  },
+  {
+    href: "/activity",
+    label: "Activity Log",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 6v6l4 2" />
       </svg>
     ),
   },
 ];
 
-const allLinks = [...overview, ...money, ...support, ...system];
+const allLinks = [...dashboard, ...management, ...compliance, ...system];
+
+const titles: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/clients": "User Management",
+  "/balance": "Balance Control",
+  "/transactions": "Transactions",
+  "/deposits": "Deposits",
+  "/withdrawals": "Withdrawals",
+  "/accounts": "Trading Accounts",
+  "/payments": "Payment Methods",
+  "/kyc": "KYC & Documents",
+  "/tickets": "Support Tickets",
+  "/meetings": "Meetings",
+  "/tenants": "Platform Settings",
+  "/staff": "Staff Users",
+  "/departments": "Departments",
+  "/activity": "Activity Log",
+};
 
 function titleFromPath(pathname: string) {
+  if (titles[pathname]) return titles[pathname];
+  if (pathname.startsWith("/clients/")) return "User Portfolio";
+  if (pathname.startsWith("/tickets/")) return "Ticket Detail";
   const hit = allLinks.find(
     (l) =>
       pathname === l.href ||
       (l.href !== "/dashboard" && pathname.startsWith(`${l.href}/`)),
   );
-  if (hit) return hit.label;
-  if (pathname.startsWith("/clients/")) return "Client";
-  if (pathname.startsWith("/tickets/")) return "Ticket";
-  return "Operations";
+  return hit?.label || "Operations";
 }
 
 function NavGroup({
@@ -164,14 +188,14 @@ function NavGroup({
   pathname,
   onGo,
 }: {
-  label: string;
+  label?: string;
   items: NavItem[];
   pathname: string;
   onGo: (href: string) => void;
 }) {
   return (
     <div className="nav-group">
-      <div className="nav-group__label">{label}</div>
+      {label ? <div className="nav-group__label">{label}</div> : null}
       {items.map((l) => {
         const active =
           l.href === "/dashboard"
@@ -210,6 +234,7 @@ export function AppShell({
   const router = useRouter();
   const [pending, start] = useTransition();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const pageTitle = titleFromPath(pathname);
 
   useEffect(() => {
@@ -226,6 +251,19 @@ export function AppShell({
     start(() => router.push(href));
   }
 
+  function onSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    start(async () => {
+      try {
+        await logoutAction();
+      } catch {
+        /* cookie may still be cleared */
+      }
+      window.location.assign("/login");
+    });
+  }
+
   return (
     <div className="shell">
       <div
@@ -235,11 +273,8 @@ export function AppShell({
       />
       <aside className={`sidebar${menuOpen ? " open" : ""}`}>
         <div className="brand">
-          <div className="brand-mark">A</div>
-          <div>
-            <strong>Apex Admin</strong>
-            <span>Operations CRM</span>
-          </div>
+          <div className="brand-mark" aria-hidden />
+          <strong>TradeScope Admin</strong>
           <button
             type="button"
             className="sidebar-close"
@@ -252,13 +287,25 @@ export function AppShell({
           </button>
         </div>
         <nav className="nav">
-          <NavGroup label="Overview" items={overview} pathname={pathname} onGo={go} />
-          <NavGroup label="Finance" items={money} pathname={pathname} onGo={go} />
-          <NavGroup label="Support" items={support} pathname={pathname} onGo={go} />
+          <NavGroup items={dashboard} pathname={pathname} onGo={go} />
+          <NavGroup label="Management" items={management} pathname={pathname} onGo={go} />
+          <NavGroup label="Compliance" items={compliance} pathname={pathname} onGo={go} />
           <NavGroup label="System" items={system} pathname={pathname} onGo={go} />
         </nav>
-        <div className="sidebar-foot">
-          <span className="muted">{user.homeTenantSlug}</span>
+        <div className="sidebar-bottom">
+          <button
+            type="button"
+            className="sidebar-signout"
+            onClick={onSignOut}
+            disabled={signingOut || pending}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <path d="M16 17l5-5-5-5" />
+              <path d="M21 12H9" />
+            </svg>
+            {signingOut ? "Signing out…" : "Sign Out"}
+          </button>
         </div>
       </aside>
 
@@ -276,11 +323,11 @@ export function AppShell({
                 <path d="M4 7h16M4 12h16M4 17h16" />
               </svg>
             </button>
-            <div>
-              <h1>{pageTitle}</h1>
-            </div>
+            <h1>{pageTitle}</h1>
           </div>
-          <ProfileMenu user={user} />
+          <div className="topbar-actions">
+            <ProfileMenu user={user} />
+          </div>
         </header>
         <div className={`content${pending ? " navigating" : ""}`}>{children}</div>
       </div>
