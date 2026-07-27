@@ -70,12 +70,12 @@ export function StatusReasonModal({
           autoFocus
         />
         <div className="modal-card__actions">
-          <button type="button" className="btn btn-soft" onClick={onClose} disabled={pending}>
+          <button type="button" className="btn btn-outline" onClick={onClose} disabled={pending}>
             Close
           </button>
           <button
             type="button"
-            className={isReject ? "btn btn-bad" : "btn btn-warn"}
+            className={isReject ? "btn btn-danger" : "btn btn-warn"}
             disabled={pending}
             onClick={() => onConfirm(reason.trim() || defaultReason)}
           >
@@ -87,6 +87,7 @@ export function StatusReasonModal({
   );
 }
 
+/** Demo-style Approve / Reject (btn-xs) in one horizontal row. */
 export function TxStatusActions({
   id,
   currentStatus,
@@ -112,54 +113,42 @@ export function TxStatusActions({
   }
 
   if (st === "COMPLETED") {
-    return <span className="muted">Completed</span>;
+    return <span className="muted" style={{ fontSize: 11 }}>Completed</span>;
   }
   if (st === "CANCELED") {
-    return <span className="muted">Canceled</span>;
+    return <span className="muted" style={{ fontSize: 11 }}>Canceled</span>;
+  }
+  if (st === "FAILED") {
+    return (
+      <button
+        type="button"
+        className="btn btn-outline btn-xs"
+        disabled={busy}
+        onClick={() => run("PENDING")}
+      >
+        Reopen
+      </button>
+    );
   }
 
   return (
     <>
-      <div className="row-actions">
-        <button
-          type="button"
-          className="btn btn-ok btn-sm"
-          disabled={busy}
-          onClick={() => run("COMPLETED")}
-        >
-          Complete
-        </button>
-        {st === "PENDING" || st === "PROCESSING" ? (
-          <>
-            <button
-              type="button"
-              className="btn btn-warn btn-sm"
-              disabled={busy}
-              onClick={() => setMode("reject")}
-            >
-              Reject
-            </button>
-            <button
-              type="button"
-              className="btn btn-soft btn-sm"
-              disabled={busy}
-              onClick={() => setMode("cancel")}
-            >
-              Cancel
-            </button>
-          </>
-        ) : null}
-        {st === "FAILED" ? (
-          <button
-            type="button"
-            className="btn btn-soft btn-sm"
-            disabled={busy}
-            onClick={() => run("PENDING")}
-          >
-            Reopen
-          </button>
-        ) : null}
-      </div>
+      <button
+        type="button"
+        className="btn btn-success btn-xs"
+        disabled={busy}
+        onClick={() => run("COMPLETED")}
+      >
+        Approve
+      </button>
+      <button
+        type="button"
+        className="btn btn-danger btn-xs"
+        disabled={busy}
+        onClick={() => setMode("reject")}
+      >
+        Reject
+      </button>
       <StatusReasonModal
         mode={mode}
         pending={busy}

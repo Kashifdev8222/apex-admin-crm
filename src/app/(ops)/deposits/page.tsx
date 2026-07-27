@@ -131,8 +131,8 @@ export default async function DepositsPage({
                     />
                   </td>
                   <td>{fmtDate(t.createdAt)}</td>
-                  <td>
-                    <div className="row-actions">
+                  <td className="actions-col">
+                    <div className="btn-actions">
                       <TxStatusActions
                         id={t.id}
                         currentStatus={t.status}
@@ -142,6 +142,7 @@ export default async function DepositsPage({
                         action={deleteTransaction}
                         id={t.id}
                         confirmText="Delete this deposit permanently?"
+                        className="btn btn-danger btn-xs"
                       />
                     </div>
                   </td>

@@ -8,17 +8,20 @@ export function ConfirmDeleteButton({
   label = "Delete",
   confirmText = "Delete this record permanently?",
   hiddenFields,
+  className = "btn btn-danger btn-xs",
 }: {
   action: (formData: FormData) => Promise<void>;
   id: string;
   label?: string;
   confirmText?: string;
   hiddenFields?: Record<string, string>;
+  className?: string;
 }) {
   const [pending, start] = useTransition();
 
   return (
     <form
+      className="inline-action"
       action={(fd) => {
         if (!window.confirm(confirmText)) return;
         start(async () => {
@@ -32,7 +35,7 @@ export function ConfirmDeleteButton({
             <input key={k} type="hidden" name={k} value={v} />
           ))
         : null}
-      <button className="btn btn-bad btn-sm" type="submit" disabled={pending}>
+      <button className={className} type="submit" disabled={pending}>
         {pending ? "…" : label}
       </button>
     </form>

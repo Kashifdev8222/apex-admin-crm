@@ -17,8 +17,11 @@ export default async function PaymentsPage() {
 
   return (
     <>
-      <div className="page-intro">
-        <p>Enable or disable deposit payment methods per tenant (CryptoPay, Lemuxion, etc.).</p>
+      <div className="page-head">
+        <div>
+          <h1>Payment Methods</h1>
+          <div className="breadcrumb">Manage deposit and withdrawal methods by tenant</div>
+        </div>
       </div>
 
       <div className="panel" style={{ marginBottom: "1rem" }}>

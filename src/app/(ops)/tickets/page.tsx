@@ -25,9 +25,23 @@ export default async function TicketsPage({
 
   return (
     <>
+      <div className="page-head">
+        <div>
+          <h1>Support Tickets</h1>
+          <div className="breadcrumb">Tickets and reply management</div>
+        </div>
+      </div>
+
+      <div className="seg-tabs">
+        <Link href="/tickets" className="active">
+          Tickets
+        </Link>
+        <Link href="/meetings">Meetings</Link>
+      </div>
+
       <form className="filters" method="get">
         <select name="status" defaultValue={status} aria-label="Status">
-          <option value="">All Statuses</option>
+          <option value="">All statuses</option>
           <option value="New">New</option>
           <option value="Open">Open</option>
           <option value="Pending">Pending</option>
@@ -36,7 +50,7 @@ export default async function TicketsPage({
           <option value="Closed">Closed</option>
         </select>
         <button className="btn btn-primary" type="submit">
-          Apply Filter
+          Apply filter
         </button>
       </form>
 

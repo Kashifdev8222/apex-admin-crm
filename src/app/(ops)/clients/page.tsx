@@ -118,14 +118,15 @@ export default async function ClientsPage({
                     <td>{money(bal, cur)}</td>
                     <td>{fmtDate(c.createdAt)}</td>
                     <td>
-                      <div className="row-actions">
-                        <Link className="btn btn-outline btn-sm" href={`/clients/${c.id}`}>
+                      <div className="btn-actions">
+                        <Link className="btn btn-outline btn-xs" href={`/clients/${c.id}`}>
                           Open
                         </Link>
                         <ConfirmDeleteButton
                           action={deleteClient}
                           id={c.id}
                           confirmText="Delete this client and all related data?"
+                          className="btn btn-danger btn-xs"
                         />
                       </div>
                     </td>

@@ -20,8 +20,11 @@ export default async function DepartmentsPage() {
 
   return (
     <>
-      <div className="page-intro">
-        <p>Create and manage support departments used when clients open tickets.</p>
+      <div className="page-head">
+        <div>
+          <h1>Departments</h1>
+          <div className="breadcrumb">Support routing and ticket categorization</div>
+        </div>
       </div>
 
       <div className="panel" style={{ marginBottom: "1rem" }}>

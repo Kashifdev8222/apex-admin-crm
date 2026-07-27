@@ -25,6 +25,20 @@ export default async function MeetingsPage() {
 
   return (
     <>
+      <div className="page-head">
+        <div>
+          <h1>Meetings</h1>
+          <div className="breadcrumb">Scheduled client meetings and assignments</div>
+        </div>
+      </div>
+
+      <div className="seg-tabs">
+        <Link href="/tickets">Tickets</Link>
+        <Link href="/meetings" className="active">
+          Meetings
+        </Link>
+      </div>
+
       <div className="panel">
         <div className="panel-head">
           <h2>{rows.length} Meetings</h2>

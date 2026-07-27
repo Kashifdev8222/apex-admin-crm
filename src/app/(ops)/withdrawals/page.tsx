@@ -47,9 +47,21 @@ export default async function WithdrawalsPage({
 
   return (
     <>
+      <div className="page-head">
+        <div>
+          <h1>Withdrawals</h1>
+          <div className="breadcrumb">
+            <Link href="/balance">Balance Control</Link> / Withdrawal requests
+          </div>
+        </div>
+        <Link href="/balance" className="btn btn-outline btn-sm">
+          Pending queue
+        </Link>
+      </div>
+
       <form className="filters" method="get">
         <select name="status" defaultValue={status} aria-label="Status">
-          <option value="">All Statuses</option>
+          <option value="">All statuses</option>
           <option value="PENDING">Pending</option>
           <option value="PROCESSING">Processing</option>
           <option value="COMPLETED">Completed</option>
@@ -57,7 +69,7 @@ export default async function WithdrawalsPage({
           <option value="CANCELED">Canceled</option>
         </select>
         <select name="tenant" defaultValue={tenant} aria-label="Tenant">
-          <option value="">All Tenants</option>
+          <option value="">All tenants</option>
           {tenants.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name} ({t.slug})
@@ -65,7 +77,7 @@ export default async function WithdrawalsPage({
           ))}
         </select>
         <button className="btn btn-primary" type="submit">
-          Apply Filter
+          Apply filter
         </button>
       </form>
 
@@ -117,8 +129,8 @@ export default async function WithdrawalsPage({
                     />
                   </td>
                   <td>{fmtDate(t.createdAt)}</td>
-                  <td>
-                    <div className="row-actions">
+                  <td className="actions-col">
+                    <div className="btn-actions">
                       <TxStatusActions
                         id={t.id}
                         currentStatus={t.status}
@@ -128,6 +140,7 @@ export default async function WithdrawalsPage({
                         action={deleteTransaction}
                         id={t.id}
                         confirmText="Delete this withdrawal permanently?"
+                        className="btn btn-danger btn-xs"
                       />
                     </div>
                   </td>

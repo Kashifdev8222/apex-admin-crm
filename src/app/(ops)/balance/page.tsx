@@ -128,16 +128,18 @@ export default async function BalancePage() {
                     </td>
                     <td>{t.tenant.slug}</td>
                     <td>{fmtDate(t.createdAt)}</td>
-                    <td>
-                      <TxStatusActions
-                        id={t.id}
-                        currentStatus={t.status}
-                        action={
-                          t.type === "DEPOSIT"
-                            ? updateDepositStatus
-                            : updateWithdrawStatus
-                        }
-                      />
+                    <td className="actions-col">
+                      <div className="btn-actions">
+                        <TxStatusActions
+                          id={t.id}
+                          currentStatus={t.status}
+                          action={
+                            t.type === "DEPOSIT"
+                              ? updateDepositStatus
+                              : updateWithdrawStatus
+                          }
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))

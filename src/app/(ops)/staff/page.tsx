@@ -17,8 +17,11 @@ export default async function StaffPage() {
 
   return (
     <>
-      <div className="page-intro">
-        <p>Manage staff logins for the Admin CRM (assign tickets &amp; meetings).</p>
+      <div className="page-head">
+        <div>
+          <h1>Staff Users</h1>
+          <div className="breadcrumb">Manage admin CRM staff access</div>
+        </div>
       </div>
 
       <div className="panel" style={{ marginBottom: "1rem" }}>

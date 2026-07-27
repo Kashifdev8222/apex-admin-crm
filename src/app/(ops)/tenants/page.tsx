@@ -22,8 +22,11 @@ export default async function TenantsPage() {
 
   return (
     <>
-      <div className="page-intro">
-        <p>Tenant (ClientZone) settings: name, MT group, leverage, and active flag.</p>
+      <div className="page-head">
+        <div>
+          <h1>Platform Settings</h1>
+          <div className="breadcrumb">Tenant defaults, MT groups, and leverage</div>
+        </div>
       </div>
 
       <div className="panel">

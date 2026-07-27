@@ -36,7 +36,7 @@ export function EditRowModal({
     <>
       <button
         type="button"
-        className="btn btn-soft btn-sm"
+        className="btn btn-outline btn-xs"
         onClick={() => setOpen(true)}
       >
         Edit
