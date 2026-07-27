@@ -148,68 +148,47 @@ async function DashboardPanels() {
               Nothing waiting for review.
             </p>
           ) : (
-            <>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1.2fr 0.8fr 1fr 0.9fr 0.7fr",
-                  gap: 12,
-                  alignItems: "center",
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: "#94a3b8",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
-                  padding: "0 0 10px",
-                  marginBottom: 12,
-                  borderBottom: "1px solid #e2e7ee",
-                }}
-              >
-                <div>Name</div>
-                <div>Type</div>
-                <div>Amount</div>
-                <div>Time</div>
-                <div>Action</div>
-              </div>
-              {approvals.map((row) => (
-                <div
-                  key={row.key}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1.2fr 0.8fr 1fr 0.9fr 0.7fr",
-                    gap: 12,
-                    alignItems: "center",
-                    padding: "12px 0",
-                    borderBottom: "1px solid #eef1f5",
-                  }}
-                >
-                  <div style={{ fontWeight: 500, fontSize: 12 }} className="cap">
-                    {row.name}
-                  </div>
-                  <div style={{ fontSize: 11 }}>{row.kind}</div>
-                  <div
-                    style={{ fontWeight: 600, fontSize: 12 }}
-                    className={
-                      row.amountClass === "ok"
-                        ? "kpi-meta ok"
-                        : row.amountClass === "bad"
-                          ? "kpi-meta bad"
-                          : undefined
-                    }
-                  >
-                    {row.amountLabel}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#94a3b8" }}>
-                    {fmtDate(row.when)}
-                  </div>
-                  <div>
-                    <Link href={row.href} className="btn btn-outline btn-xs">
-                      Review
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </>
+            <div className="table-wrap">
+              <table className="data">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Time</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {approvals.map((row) => (
+                    <tr key={row.key}>
+                      <td className="cap" style={{ fontWeight: 500 }}>
+                        {row.name}
+                      </td>
+                      <td>{row.kind}</td>
+                      <td
+                        style={{ fontWeight: 600 }}
+                        className={
+                          row.amountClass === "ok"
+                            ? "ok"
+                            : row.amountClass === "bad"
+                              ? "bad"
+                              : "muted"
+                        }
+                      >
+                        {row.amountLabel}
+                      </td>
+                      <td className="muted">{fmtDate(row.when)}</td>
+                      <td>
+                        <Link href={row.href} className="btn btn-outline btn-xs">
+                          Review
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
@@ -220,29 +199,31 @@ async function DashboardPanels() {
               No recent transactions.
             </p>
           ) : (
-            recentTx.map((t) => {
-              const isDep = t.type === "DEPOSIT";
-              return (
-                <div className="activity-row" key={t.id}>
-                  <span
-                    className={`badge ${isDep ? "badge-blue" : "badge-amber"}`}
-                  >
-                    {capitalize(t.type)}
-                  </span>
-                  <span className="act-label">
-                    {t.client.firstName} {t.client.lastName} · {t.tenant.slug}
-                  </span>
-                  <span
-                    className="act-amt"
-                    style={{ color: isDep ? "#10b981" : "#ef4444" }}
-                  >
-                    {isDep ? "+" : "-"}
-                    {money(t.amount, t.currency)}
-                  </span>
-                  <span className="act-time">{fmtDate(t.createdAt)}</span>
-                </div>
-              );
-            })
+            <div className="activity-list">
+              {recentTx.map((t) => {
+                const isDep = t.type === "DEPOSIT";
+                return (
+                  <div className="activity-row" key={t.id}>
+                    <span
+                      className={`badge ${isDep ? "badge-blue" : "badge-amber"}`}
+                    >
+                      {capitalize(t.type)}
+                    </span>
+                    <span className="act-label">
+                      {t.client.firstName} {t.client.lastName} · {t.tenant.slug}
+                    </span>
+                    <span
+                      className="act-amt"
+                      style={{ color: isDep ? "#10b981" : "#ef4444" }}
+                    >
+                      {isDep ? "+" : "-"}
+                      {money(t.amount, t.currency)}
+                    </span>
+                    <span className="act-time">{fmtDate(t.createdAt)}</span>
+                  </div>
+                );
+              })}
+            </div>
           )}
           <div style={{ marginTop: 16 }}>
             <Link

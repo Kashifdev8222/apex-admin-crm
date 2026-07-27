@@ -66,13 +66,19 @@ button, input, select, textarea { font: inherit; }
   position: fixed;
   left: 0;
   top: 0;
+  bottom: 0;
   width: var(--sidebar-w);
   height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-height: 100dvh;
   background: #fff;
   border-right: 1px solid #e8ecf1;
   z-index: 30;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .brand {
@@ -82,6 +88,7 @@ button, input, select, textarea { font: inherit; }
   gap: 10px;
   border-bottom: 1px solid #eef1f6;
   position: relative;
+  flex-shrink: 0;
 }
 
 .brand-mark,
@@ -123,12 +130,14 @@ button, input, select, textarea { font: inherit; }
 .sidebar-close:hover { background: #f1f5f9; color: #1e293b; }
 
 .nav {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 1px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .nav-group {
@@ -191,6 +200,9 @@ button, input, select, textarea { font: inherit; }
 .sidebar-bottom {
   padding: 12px;
   border-top: 1px solid #eef1f6;
+  flex-shrink: 0;
+  margin-top: auto;
+  background: #fff;
 }
 
 .sidebar-foot .muted { display: none; }
@@ -514,11 +526,17 @@ button, input, select, textarea { font: inherit; }
   margin-bottom: 0;
 }
 
-.table-wrap { overflow-x: auto; }
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100%;
+}
 
 table.data,
 table.data-table {
   width: 100%;
+  min-width: 760px;
   border-collapse: collapse;
   font-family: var(--f);
   font-size: 12px;
@@ -533,6 +551,7 @@ table.data-table td {
   padding: 12px 24px;
   border-bottom: 1px solid #eef1f5;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 table.data th,
@@ -563,6 +582,9 @@ table.data .muted {
   font-size: 11px;
   margin-top: 2px;
 }
+
+table.data .ok { color: #10b981; }
+table.data .bad { color: #ef4444; }
 
 table.data th.sr-col,
 table.data td.sr-col {
@@ -736,6 +758,17 @@ table.data td.actions-col {
   border-radius: 20px;
   padding: 28px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dash-panel .table-wrap {
+  margin: 0 -8px;
+  padding: 0 8px;
+}
+
+.dash-panel table.data {
+  min-width: 560px;
 }
 
 .dash-panel__title {
@@ -753,6 +786,7 @@ table.data td.actions-col {
   padding: 0 0 12px;
   margin-bottom: 12px;
   border-bottom: 1px solid #eef1f5;
+  min-width: 420px;
 }
 
 .activity-row:last-child {
@@ -766,17 +800,29 @@ table.data td.actions-col {
   color: var(--t);
   flex: 1;
   min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .activity-row .act-amt {
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .activity-row .act-time {
   font-size: 10px;
   color: #94a3b8;
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.activity-list {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
 .comment {
@@ -1454,7 +1500,12 @@ table.data td.actions-col {
   .menu-btn { display: inline-flex; }
   .sidebar-close { display: inline-flex; }
   .sidebar {
-    transform: translateX(-100%);
+    top: 0;
+    bottom: 0;
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    transform: translateX(-105%);
     transition: transform 0.25s ease;
     box-shadow: var(--shadow-md);
   }
@@ -1474,7 +1525,7 @@ table.data td.actions-col {
     opacity: 1;
     pointer-events: auto;
   }
-  .content { padding: 18px 18px 28px 22px; }
+  .content { padding: 18px 16px 28px; overflow-x: hidden; }
   .topbar { padding: 0 16px; }
   .grid-2 { grid-template-columns: 1fr; }
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1484,6 +1535,10 @@ table.data td.actions-col {
   }
   .panel-head .filter-row {
     width: 100%;
+  }
+  .panel,
+  .dash-panel {
+    overflow: hidden;
   }
 }
 
@@ -1498,14 +1553,12 @@ table.data td.actions-col {
   .filters select,
   .filter-row input,
   .filter-row select { min-width: 0; flex: 1 1 140px; }
-  .tip-cell { max-width: 120px; }
+  .tip-cell { max-width: 140px; }
   table.data th,
-  table.data td { padding: 10px 14px; }
+  table.data td,
+  table.data-table th,
+  table.data-table td { padding: 10px 14px; }
   .profile-dropdown { right: -4px; width: min(240px, calc(100vw - 1.5rem)); }
-  /* Keep action buttons in one row; table scrolls horizontally */
-  .table-wrap {
-    -webkit-overflow-scrolling: touch;
-    margin: 0 -4px;
-    padding: 0 4px;
-  }
+  .dash-panel { padding: 18px 14px; }
+  .content { padding: 14px 12px 24px; }
 }
