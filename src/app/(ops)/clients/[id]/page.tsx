@@ -232,7 +232,7 @@ export default async function ClientDetailPage({
                   <tr key={t.id}>
                     <td>Ticket</td>
                     <td>
-                      <Link href={`/tickets/${t.id}`}>{t.subject}</Link>
+                      <Link href={`/tickets/${t.id}`}>{t.title}</Link>
                     </td>
                     <td>
                       <StatusBadge status={t.status} />
