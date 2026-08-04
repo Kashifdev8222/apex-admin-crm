@@ -7,6 +7,12 @@ import {
   getRecentTransactions,
 } from "@/lib/dashboard-data";
 import { capitalize, fmtDate, money } from "@/lib/format";
+import { TxStatusActions } from "@/components/TxStatusActions";
+import {
+  updateDepositStatus,
+  updateWithdrawStatus,
+  reviewKyc,
+} from "@/app/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +119,10 @@ async function DashboardPanels() {
       amountClass: string;
       when: string;
       href: string;
+      id?: string;
+      status?: string;
+      txType?: "DEPOSIT" | "WITHDRAW";
+      kindType: "tx" | "kyc";
     };
 
     const approvals: ApprovalRow[] = [
@@ -125,6 +135,10 @@ async function DashboardPanels() {
         amountClass: t.type === "DEPOSIT" ? "ok" : "bad",
         when: t.createdAt,
         href: t.type === "DEPOSIT" ? "/deposits" : "/withdrawals",
+        id: t.id,
+        status: t.status,
+        txType: t.type as "DEPOSIT" | "WITHDRAW",
+        kindType: "tx" as const,
       })),
       ...kyc.map((d) => ({
         key: `kyc-${d.id}`,
@@ -134,6 +148,8 @@ async function DashboardPanels() {
         amountClass: "muted",
         when: d.createdAt,
         href: "/kyc",
+        id: d.id,
+        kindType: "kyc" as const,
       })),
     ]
       .sort((a, b) => new Date(b.when).getTime() - new Date(a.when).getTime())
@@ -180,9 +196,36 @@ async function DashboardPanels() {
                       </td>
                       <td className="muted">{fmtDate(row.when)}</td>
                       <td>
-                        <Link href={row.href} className="btn btn-outline btn-xs">
-                          Review
-                        </Link>
+                        {row.kindType === "tx" && row.id && row.status && row.txType ? (
+                          <div className="btn-actions">
+                            <TxStatusActions
+                              id={row.id}
+                              currentStatus={row.status}
+                              action={
+                                row.txType === "DEPOSIT"
+                                  ? updateDepositStatus
+                                  : updateWithdrawStatus
+                              }
+                            />
+                          </div>
+                        ) : row.id ? (
+                          <div className="btn-actions">
+                            <form action={reviewKyc}>
+                              <input type="hidden" name="id" value={row.id} />
+                              <input type="hidden" name="status" value="APPROVED" />
+                              <button type="submit" className="btn btn-success btn-xs">
+                                Approve
+                              </button>
+                            </form>
+                            <Link href={row.href} className="btn btn-outline btn-xs">
+                              Review
+                            </Link>
+                          </div>
+                        ) : (
+                          <Link href={row.href} className="btn btn-outline btn-xs">
+                            Review
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   ))}

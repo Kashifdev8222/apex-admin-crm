@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -6,6 +6,10 @@ import { useEffect, useState, useTransition, type ReactNode } from "react";
 import type { SessionUser } from "@/lib/auth";
 import { logoutAction } from "@/app/actions";
 import { ProfileMenu } from "@/components/ProfileMenu";
+import {
+  NotificationsBell,
+  type NotifItem,
+} from "@/components/NotificationsBell";
 
 type NavItem = { href: string; label: string; icon: ReactNode };
 
@@ -53,22 +57,22 @@ const management: NavItem[] = [
     ),
   },
   {
+    href: "/ai-control",
+    label: "AI Control Panel",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="4" width="16" height="16" rx="2" />
+        <path d="M9 9h6M9 15h6M9 12h6" />
+      </svg>
+    ),
+  },
+  {
     href: "/accounts",
     label: "Trading Accounts",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z" />
         <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-      </svg>
-    ),
-  },
-  {
-    href: "/payments",
-    label: "Payment Methods",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="5" width="20" height="14" rx="2" />
-        <path d="M2 10h20" />
       </svg>
     ),
   },
@@ -95,16 +99,6 @@ const compliance: NavItem[] = [
       </svg>
     ),
   },
-  {
-    href: "/meetings",
-    label: "Meetings",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="5" width="18" height="16" rx="2" />
-        <path d="M3 10h18M8 3v4M16 3v4" />
-      </svg>
-    ),
-  },
 ];
 
 const system: NavItem[] = [
@@ -115,6 +109,26 @@ const system: NavItem[] = [
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3" />
         <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+      </svg>
+    ),
+  },
+  {
+    href: "/activity",
+    label: "Activity Log",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 6v6l4 2" />
+      </svg>
+    ),
+  },
+  {
+    href: "/payments",
+    label: "Payment Methods",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2" />
+        <path d="M2 10h20" />
       </svg>
     ),
   },
@@ -139,12 +153,12 @@ const system: NavItem[] = [
     ),
   },
   {
-    href: "/activity",
-    label: "Activity Log",
+    href: "/meetings",
+    label: "Meetings",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 6v6l4 2" />
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M3 10h18M8 3v4M16 3v4" />
       </svg>
     ),
   },
@@ -157,6 +171,7 @@ const titles: Record<string, string> = {
   "/clients": "User Management",
   "/balance": "Balance Control",
   "/transactions": "Transactions",
+  "/ai-control": "AI Control Panel",
   "/deposits": "Deposits",
   "/withdrawals": "Withdrawals",
   "/accounts": "Trading Accounts",
@@ -225,9 +240,11 @@ function NavGroup({
 
 export function AppShell({
   user,
+  notifications = [],
   children,
 }: {
   user: SessionUser;
+  notifications?: NotifItem[];
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -326,10 +343,13 @@ export function AppShell({
             <h1>{pageTitle}</h1>
           </div>
           <div className="topbar-actions">
+            <NotificationsBell items={notifications} />
             <ProfileMenu user={user} />
           </div>
         </header>
-        <div className={`content${pending ? " navigating" : ""}`}>{children}</div>
+        <div className={`content${pending ? " navigating" : ""}`}>
+          <div className="content-inner">{children}</div>
+        </div>
       </div>
     </div>
   );

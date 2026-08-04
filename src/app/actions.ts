@@ -476,4 +476,146 @@ export async function updateTenant(formData: FormData) {
   revalidatePath("/tenants");
 }
 
+/* ——— Balance adjust (demo Balance Control) ——— */
+export async function adjustUserBalance(formData: FormData) {
+  const session = await requireSession();
+  const accountId = String(formData.get("accountId") || "");
+  const operation = String(formData.get("operation") || "credit");
+  const amount = Number(formData.get("amount") || 0);
+  const reason = String(formData.get("reason") || "Correction").trim();
+  if (!accountId || !Number.isFinite(amount) || amount <= 0) return;
+
+  const account = await prisma.tradingAccount.findUnique({
+    where: { id: accountId },
+    select: {
+      id: true,
+      tenantId: true,
+      clientId: true,
+      balance: true,
+      equity: true,
+      currency: true,
+    },
+  });
+  if (!account) return;
+
+  const bal = Number(account.balance);
+  let next = bal;
+  if (operation === "credit") next = bal + amount;
+  else if (operation === "debit") next = Math.max(0, bal - amount);
+  else if (operation === "set") next = amount;
+  else return;
+
+  const delta = next - bal;
+
+  await prisma.$transaction([
+    prisma.tradingAccount.update({
+      where: { id: account.id },
+      data: {
+        balance: next,
+        equity: Number(account.equity) + delta,
+      },
+    }),
+    prisma.transaction.create({
+      data: {
+        tenantId: account.tenantId,
+        clientId: account.clientId,
+        accountId: account.id,
+        type: "ADJUSTMENT",
+        status: "COMPLETED",
+        amount: Math.abs(delta),
+        currency: account.currency,
+        note: reason,
+        comment: `Admin ${operation}: ${reason}`,
+        meta: {
+          operation,
+          previousBalance: bal,
+          nextBalance: next,
+          by: session.staffId,
+        },
+      },
+    }),
+    prisma.auditLog.create({
+      data: {
+        tenantId: account.tenantId,
+        actorType: "staff",
+        actorId: session.staffId,
+        action: "balance.adjust",
+        entityType: "TradingAccount",
+        entityId: account.id,
+        meta: { operation, amount, reason, previousBalance: bal, nextBalance: next },
+      },
+    }),
+  ]);
+
+  revalidatePath("/balance");
+  revalidatePath("/transactions");
+  revalidatePath("/accounts");
+  revalidatePath(`/clients/${account.clientId}`);
+}
+
+export async function toggleClientAi(formData: FormData) {
+  await requireSession();
+  const id = String(formData.get("id") || "");
+  const enabled = String(formData.get("enabled") || "") === "true";
+  if (!id) return;
+  const client = await prisma.client.findUnique({
+    where: { id },
+    select: { tags: true },
+  });
+  if (!client) return;
+  const tags = Array.isArray(client.tags)
+    ? (client.tags as string[]).filter((t) => t !== "ai_enabled")
+    : [];
+  if (enabled) tags.push("ai_enabled");
+  await prisma.client.update({
+    where: { id },
+    data: { tags },
+  });
+  revalidatePath("/clients");
+  revalidatePath("/ai-control");
+}
+
+export async function saveAiGlobalSettings(formData: FormData) {
+  await requireSession();
+  const { getAiSettings, saveAiSettings } = await import("@/lib/platform-settings");
+  const cur = await getAiSettings();
+  await saveAiSettings({
+    emergencyStop: cur.emergencyStop,
+    positionSizePct: Number(formData.get("positionSizePct") || cur.positionSizePct),
+    stopLossPct: Number(formData.get("stopLossPct") || cur.stopLossPct),
+    takeProfitPct: Number(formData.get("takeProfitPct") || cur.takeProfitPct),
+    maxDrawdownPct: Number(formData.get("maxDrawdownPct") || cur.maxDrawdownPct),
+    maxDailyTrades: Number(formData.get("maxDailyTrades") || cur.maxDailyTrades),
+    maxLeverage: String(formData.get("maxLeverage") || cur.maxLeverage),
+  });
+  revalidatePath("/ai-control");
+}
+
+export async function setAiEmergencyStop(formData: FormData) {
+  await requireSession();
+  const { getAiSettings, saveAiSettings } = await import("@/lib/platform-settings");
+  const cur = await getAiSettings();
+  const stop = String(formData.get("stop") || "") === "true";
+  await saveAiSettings({ ...cur, emergencyStop: stop });
+  revalidatePath("/ai-control");
+}
+
+export async function savePlatformSettingsAction(formData: FormData) {
+  await requireSession();
+  const { savePlatformSettings } = await import("@/lib/platform-settings");
+  await savePlatformSettings({
+    defaultLeverage: Number(formData.get("defaultLeverage") || 500),
+    maxLeverage: Number(formData.get("maxLeverage") || 500),
+    minDepositUsd: Number(formData.get("minDepositUsd") || 250),
+    baseCurrency: String(formData.get("baseCurrency") || "USD"),
+    marginCallPct: Number(formData.get("marginCallPct") || 100),
+    stopOutPct: Number(formData.get("stopOutPct") || 30),
+    commissionPerLot: Number(formData.get("commissionPerLot") || 7),
+    withdrawalFee: Number(formData.get("withdrawalFee") || 0),
+    spreadMarkup: Number(formData.get("spreadMarkup") || 0.5),
+    depositFeePct: Number(formData.get("depositFeePct") || 0),
+  });
+  revalidatePath("/tenants");
+}
+
 

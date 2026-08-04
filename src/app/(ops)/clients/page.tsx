@@ -1,27 +1,24 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ConfirmDeleteButton } from "@/components/ConfirmDeleteButton";
+import { AiToggleForm } from "@/components/AiToggleForm";
 import { prisma } from "@/lib/prisma";
 import { fmtDate, money } from "@/lib/format";
-import { deleteClient } from "@/app/actions";
+import { toggleClientAi, updateClientStatus } from "@/app/actions";
+import { clientHasAi } from "@/lib/platform-settings";
 
 export default async function ClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; tenant?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; ai?: string }>;
 }) {
   const sp = await searchParams;
   const q = sp.q?.trim() || "";
-  const tenant = sp.tenant?.trim() || "";
-
-  const tenants = await prisma.tenant.findMany({
-    orderBy: { name: "asc" },
-    select: { id: true, slug: true, name: true },
-  });
+  const status = sp.status?.trim() || "";
+  const ai = sp.ai?.trim() || "";
 
   const rows = await prisma.client.findMany({
     where: {
-      ...(tenant ? { tenantId: tenant } : {}),
+      ...(status ? { status } : {}),
       ...(q
         ? {
             OR: [
@@ -39,95 +36,127 @@ export default async function ClientsPage({
       tenant: { select: { slug: true, name: true } },
       accounts: {
         where: { isActive: true },
-        select: { balance: true, currency: true },
+        select: {
+          balance: true,
+          currency: true,
+          externalLogin: true,
+        },
+        take: 1,
       },
     },
   });
+
+  const filtered =
+    ai === "on"
+      ? rows.filter((c) => clientHasAi(c.tags))
+      : ai === "off"
+        ? rows.filter((c) => !clientHasAi(c.tags))
+        : rows;
 
   return (
     <>
       <div className="page-head">
         <div>
           <h1>User Management</h1>
-          <div className="breadcrumb">Clients across all tenants</div>
         </div>
       </div>
 
-      <form className="filters" method="get">
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="Search email, name, phone"
-          aria-label="Search"
-        />
-        <select name="tenant" defaultValue={tenant} aria-label="Tenant">
-          <option value="">All tenants</option>
-          {tenants.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name} ({t.slug})
-            </option>
-          ))}
-        </select>
-        <button className="btn btn-primary" type="submit">
-          Apply filter
-        </button>
-      </form>
-
       <div className="panel">
         <div className="panel-head">
-          <h2>{rows.length} Users</h2>
+          <h2>All users</h2>
+          <form className="filter-row" method="get">
+            <input
+              className="input"
+              name="q"
+              defaultValue={q}
+              placeholder="Search name or email…"
+              style={{ minWidth: 200 }}
+            />
+            <select className="input" name="status" defaultValue={status}>
+              <option value="">All status</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+            </select>
+            <select className="input" name="ai" defaultValue={ai}>
+              <option value="">AI: any</option>
+              <option value="on">AI enabled</option>
+              <option value="off">AI disabled</option>
+            </select>
+            <button className="btn btn-outline btn-sm" type="submit">
+              Filter
+            </button>
+          </form>
         </div>
         <div className="table-wrap">
           <table className="data">
             <thead>
               <tr>
                 <th className="sr-col">#</th>
-                <th>User</th>
-                <th>Tenant</th>
+                <th>Name</th>
+                <th>Email</th>
                 <th>Status</th>
+                <th>AI</th>
+                <th>Account</th>
                 <th>Balance</th>
                 <th>Joined</th>
-                <th>Actions</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((c, i) => {
-                const bal = c.accounts.reduce((s, a) => s + Number(a.balance), 0);
-                const cur = c.accounts[0]?.currency || "USD";
-                const initials =
-                  `${c.firstName?.[0] || ""}${c.lastName?.[0] || ""}`.toUpperCase() ||
-                  c.email.slice(0, 2).toUpperCase();
+              {filtered.map((c, i) => {
+                const acc = c.accounts[0];
+                const bal = acc ? money(Number(acc.balance), acc.currency) : "—";
+                const on = clientHasAi(c.tags);
+                const suspended = c.status.toLowerCase() === "suspended";
                 return (
                   <tr key={c.id}>
                     <td className="sr-col">{i + 1}</td>
-                    <td>
-                      <Link href={`/clients/${c.id}`} className="user-cell">
-                        <span className="user-avatar">{initials}</span>
-                        <span className="user-info">
-                          <span className="user-name cap">
-                            {c.firstName} {c.lastName}
-                          </span>
-                          <span className="user-sub">{c.email}</span>
-                        </span>
+                    <td style={{ fontWeight: 500 }}>
+                      <Link href={`/clients/${c.id}`} className="cap">
+                        {c.firstName} {c.lastName}
                       </Link>
                     </td>
-                    <td>{c.tenant.slug}</td>
+                    <td className="muted">{c.email}</td>
                     <td>
                       <StatusBadge status={c.status} />
                     </td>
-                    <td>{money(bal, cur)}</td>
+                    <td>
+                      <AiToggleForm
+                        id={c.id}
+                        enabled={on}
+                        action={toggleClientAi}
+                      />
+                    </td>
+                    <td style={{ fontWeight: 600 }}>
+                      {acc?.externalLogin || "—"}
+                    </td>
+                    <td>{bal}</td>
                     <td>{fmtDate(c.createdAt)}</td>
                     <td>
                       <div className="btn-actions">
-                        <Link className="btn btn-outline btn-xs" href={`/clients/${c.id}`}>
-                          Open
-                        </Link>
-                        <ConfirmDeleteButton
-                          action={deleteClient}
-                          id={c.id}
-                          confirmText="Delete this client and all related data?"
-                          className="btn btn-danger btn-xs"
-                        />
+                        <form action={updateClientStatus}>
+                          <input type="hidden" name="id" value={c.id} />
+                          <input
+                            type="hidden"
+                            name="status"
+                            value={suspended ? "active" : "suspended"}
+                          />
+                          {suspended ? (
+                            <button
+                              type="submit"
+                              className="btn btn-success btn-xs"
+                            >
+                              Reactivate
+                            </button>
+                          ) : (
+                            <button
+                              type="submit"
+                              className="btn btn-xs btn-suspend"
+                            >
+                              Suspend
+                            </button>
+                          )}
+                        </form>
                       </div>
                     </td>
                   </tr>

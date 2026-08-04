@@ -28,6 +28,7 @@ export type DashboardTx = {
 export type PendingApprovalTx = {
   id: string;
   type: string;
+  status: string;
   amount: number;
   currency: string;
   createdAt: string;
@@ -156,6 +157,7 @@ export async function getPendingApprovals(): Promise<{
         select: {
           id: true,
           type: true,
+          status: true,
           amount: true,
           currency: true,
           createdAt: true,
@@ -178,6 +180,7 @@ export async function getPendingApprovals(): Promise<{
       txs: txs.map((t) => ({
         id: t.id,
         type: String(t.type),
+        status: String(t.status),
         amount: statNum(t.amount),
         currency: t.currency || "USD",
         createdAt: t.createdAt.toISOString(),

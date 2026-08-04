@@ -65,7 +65,7 @@ export function ProfileMenu({ user }: { user: SessionUser }) {
             role="menuitem"
             onClick={() => setOpen(false)}
           >
-            Platform Settings
+            My Profile
           </Link>
           <Link
             href="/activity"
